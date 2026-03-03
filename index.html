@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -502,6 +503,19 @@ select.sinput option{background:var(--s2);}
 </div>
 
 <script>
+
+/* =========================
+   GLOBAL CRASH SHIELD
+========================= */
+window.addEventListener('error', function(e){
+  console.error('Global Error:', e.error || e.message);
+  if(typeof toast==='function') toast('Unexpected error occurred','err');
+});
+window.addEventListener('unhandledrejection', function(e){
+  console.error('Unhandled Promise:', e.reason);
+  if(typeof toast==='function') toast('System error occurred','err');
+});
+
 /* ================================================================
    STORAGE HELPERS
    - gd/sd  : JSON get/set for app data (bills, rooms, settings)
@@ -513,6 +527,7 @@ function sd(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{toast('Sto
 function lsRaw(k,v){
   if(v===undefined)try{return localStorage.getItem(k);}catch{return null;}
   try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){}
+finally{ _syncing=false; }
 }
 
 /* ================================================================
@@ -520,6 +535,8 @@ function lsRaw(k,v){
    ================================================================ */
 const GD={FILE:'rentbook-pro-data.json',SCOPE:'https://www.googleapis.com/auth/drive.appdata'};
 let _gisOk=false,_gapiOk=false,_tc=null,_gTok=null,_gFid=null,_syncTimer=null;
+let _syncing=false;
+let _bgSyncTimer=null;
 
 function loadGScripts(cid){
   if(!cid)return;
@@ -561,6 +578,7 @@ function _applyConnected(){
   document.getElementById('sact').textContent='Sync Now';
   document.getElementById('driveFileRow').style.display='';
   _renderDriveW(true);
+  startBackgroundSync();
 }
 function handleSyncBtn(){
   const s=getSettings();
@@ -572,6 +590,12 @@ function handleSyncBtn(){
 }
 function _schedSync(){clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
 async function forceSyncNow(){
+  if(_syncing) return;
+  if(!_gTok){
+    _syncUI('','Not connected');
+    return;
+  }
+  _syncing = true;
   if(!_gTok)return;
   _syncUI('spin','Syncing…');
   try{
@@ -643,6 +667,19 @@ function _buildDump(){
 }
 function _restoreDump(d){Object.entries(d).forEach(([k,v])=>{if(k.startsWith('rb_'))localStorage.setItem(k,v);});}
 
+
+/* =========================
+   BACKGROUND AUTO SYNC
+========================= */
+function startBackgroundSync(){
+  if(_bgSyncTimer) clearInterval(_bgSyncTimer);
+  _bgSyncTimer = setInterval(function(){
+    if(_gTok && !_syncing){
+      forceSyncNow();
+    }
+  }, 5 * 60 * 1000);
+}
+
 /* ================================================================
    APP DATA
    ================================================================ */
@@ -711,6 +748,16 @@ function daysLeft(room){return Math.max(0,Math.round((new Date(new Date().getFul
 /* ================================================================
    RENDER DASHBOARD
    ================================================================ */
+
+function safeRender(){
+  try{
+    safeRender();
+  }catch(e){
+    console.error('Render failed:', e);
+    toast('Rendering issue detected','err');
+  }
+}
+
 function renderDashboard(){
   const rooms=getRooms(),settings=getSettings();
   let col=0,pen=0,ov=0,vac=0,occ=0,paidC=0,ovC=0,penC=0;
@@ -910,7 +957,7 @@ function saveBill(rid){
   if(noteEl&&noteEl.value.trim())addNote(rid,noteEl.value.trim());
   toast('Bill saved ✓','ok');
   openPanels.add(rid);
-  renderDashboard();updateAlertBadge();
+  safeRender();updateAlertBadge();
 }
 
 /* ─── RESET BILL — FULLY FIXED ─── */
@@ -930,7 +977,7 @@ function doResetBill(rid){
       deleteRoomBill(curY,curM,rid);
       toast('Bill reset successfully','info');
       openPanels.add(rid);
-      renderDashboard();updateAlertBadge();
+      safeRender();updateAlertBadge();
     }
   );
 }
@@ -946,7 +993,7 @@ function togglePaid(rid){
   saveRoomBill(curY,curM,rid,bill);
   toast(bill.paid?'Marked Paid ✓':'Marked Unpaid','ok');
   _schedSync();
-  renderDashboard();updateAlertBadge();
+  safeRender();updateAlertBadge();
 }
 
 /* ─── WHATSAPP ─── */
@@ -1047,7 +1094,7 @@ function confirmTenant(){
     addTenantLog(_tmRoom,{name,phone,deposit:dep,moveInDate:date,date:new Date().toISOString(),prevName:room.tenantName});
   }
   saveRooms(rooms.map(r=>r.id===_tmRoom?{...r,tenantName:name,tenantPhone:phone,moveInDate:date,deposit:dep}:r));
-  closeOv('ovTenant');toast('Tenant saved ✓','ok');renderDashboard();updateAlertBadge();
+  closeOv('ovTenant');toast('Tenant saved ✓','ok');safeRender();updateAlertBadge();
 }
 
 /* ─── VACATE MODAL ─── */
@@ -1064,13 +1111,13 @@ function confirmVacate(){
     addTenantLog(_vmRoom,{name:room.tenantName,phone:room.tenantPhone,deposit:room.deposit,moveInDate:room.moveInDate,moveOutDate:date,notes,date:new Date().toISOString(),type:'vacate'});
   }
   saveRooms(rooms.map(r=>r.id===_vmRoom?{...r,tenantName:'',tenantPhone:'',deposit:0,moveInDate:''}:r));
-  closeOv('ovVacate');toast('Room vacated','info');openPanels.delete(_vmRoom);renderDashboard();updateAlertBadge();
+  closeOv('ovVacate');toast('Room vacated','info');openPanels.delete(_vmRoom);safeRender();updateAlertBadge();
 }
 
 /* ─── ADD NOTE ─── */
 function doAddNote(rid){
   const n=prompt('Add note for Room '+rid+':');
-  if(n&&n.trim()){addNote(rid,n.trim());toast('Note added ✓','ok');renderDashboard();}
+  if(n&&n.trim()){addNote(rid,n.trim());toast('Note added ✓','ok');safeRender();}
 }
 
 /* ─── ALERTS ─── */
@@ -1121,7 +1168,7 @@ function renderAlerts(){
 function jumpToRoom(rid){
   showTab('home');
   openPanels.add(rid);
-  renderDashboard();
+  safeRender();
   setTimeout(function(){
     const el=document.getElementById('rc-'+rid);
     if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1280,10 +1327,10 @@ function changeMonth(d){
   if(m<0){m=11;y--;}if(m>11){m=0;y++;}
   const now=new Date();
   if(y>now.getFullYear()||(y===now.getFullYear()&&m>now.getMonth()))return;
-  curM=m;curY=y;updML();renderDashboard();updateAlertBadge();
+  curM=m;curY=y;updML();safeRender();updateAlertBadge();
 }
 function updML(){document.getElementById('mLabel').textContent=MONTHS[curM].slice(0,3)+' '+curY;}
-function togglePanel(id){if(openPanels.has(id))openPanels.delete(id);else openPanels.add(id);renderDashboard();}
+function togglePanel(id){if(openPanels.has(id))openPanels.delete(id);else openPanels.add(id);safeRender();}
 
 /* ─── MODALS ─── */
 function openOv(id){document.getElementById(id).classList.add('open');}
@@ -1335,7 +1382,7 @@ function init(){
   const s=getSettings();
   document.getElementById('brandProp').textContent=s.propertyName||'My Property';
   getRooms();
-  renderDashboard();
+  safeRender();
   updateAlertBadge();
   _syncUI('','Not connected');
   const ls=lsRaw('rb_lsync');
