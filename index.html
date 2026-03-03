@@ -25,30 +25,61 @@
   --wa:#128C7E;
   --rad:13px;--rads:9px;--radx:22px;
   --sh:0 8px 32px rgba(0,0,0,.5);
+  --bnav-h:68px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{height:100%;overscroll-behavior:none;}
-body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding-bottom:calc(160px + env(safe-area-inset-bottom,0px));overflow-x:hidden;min-height:100%;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom,0px) + 12px);overflow-x:hidden;min-height:100%;}
 
-/* TOPBAR */
-.topbar{background:rgba(7,13,26,.97);border-bottom:1px solid var(--b1);padding:12px 15px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+/* ── LOGIN SCREEN ── */
+#loginScreen{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 24px;
+}
+.login-logo{width:72px;height:72px;border-radius:20px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 0 40px rgba(245,166,35,.35);margin-bottom:20px;animation:pulse 2.5s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 40px rgba(245,166,35,.35)}50%{box-shadow:0 0 60px rgba(245,166,35,.55)}}
+.login-title{font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin-bottom:4px;}
+.login-sub{font-size:.78rem;color:var(--muted);margin-bottom:40px;text-align:center;}
+.login-card{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;}
+.login-card-title{font-size:.85rem;font-weight:700;color:var(--txt2);margin-bottom:18px;text-align:center;}
+#g-signin-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff;color:#1f1f1f;border:none;border-radius:10px;
+  padding:13px 20px;font-size:.85rem;font-weight:600;font-family:'Sora',sans-serif;
+  cursor:pointer;width:100%;transition:.18s;letter-spacing:.01em;
+}
+#g-signin-btn:active{transform:scale(.97);}
+#g-signin-btn svg{width:20px;height:20px;flex-shrink:0;}
+.login-err{font-size:.71rem;color:var(--r);text-align:center;margin-top:12px;min-height:18px;line-height:1.5;}
+.login-note{font-size:.62rem;color:var(--muted);text-align:center;margin-top:16px;line-height:1.7;}
+.login-spinner{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:16px;}
+.login-spinner.show{display:flex;}
+.spin-ring{width:28px;height:28px;border:2.5px solid var(--b2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOPBAR ── */
+.topbar{background:rgba(7,13,26,.97);border-bottom:1px solid var(--b1);padding:10px 15px 9px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
 .brand{display:flex;align-items:center;gap:9px;}
 .brand-ico{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 0 14px var(--ag);flex-shrink:0;}
 .brand-name{font-size:.95rem;font-weight:800;letter-spacing:-.02em;}
 .brand-sub{font-size:.62rem;color:var(--muted);margin-top:1px;}
-.mnav{display:flex;align-items:center;gap:6px;}
-.mnbtn{width:31px;height:31px;border-radius:50%;background:var(--s2);border:1px solid var(--b2);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s;flex-shrink:0;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.mnav{display:flex;align-items:center;gap:5px;}
+.mnbtn{width:30px;height:30px;border-radius:50%;background:var(--s2);border:1px solid var(--b2);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s;flex-shrink:0;}
 .mnbtn:active{background:var(--accent);color:#000;border-color:var(--accent);}
-.mnlbl{font-size:.73rem;font-weight:700;color:var(--accent);min-width:80px;text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;}
+.mnlbl{font-size:.73rem;font-weight:700;color:var(--accent);min-width:76px;text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;}
+.user-avatar{width:30px;height:30px;border-radius:50%;border:2px solid var(--accent);cursor:pointer;object-fit:cover;flex-shrink:0;}
+.user-avatar-placeholder{width:30px;height:30px;border-radius:50%;border:2px solid var(--b2);background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--accent);cursor:pointer;flex-shrink:0;}
 
-/* TABS */
-.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--b1);position:sticky;top:58px;z-index:190;overflow-x:auto;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab-btn{flex:1;min-width:56px;padding:10px 3px 8px;font-size:.65rem;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
-.tab-btn.on{color:var(--accent);border-bottom-color:var(--accent);}
+/* PAGE HEADER — replaces tabs at top */
+.page-header{padding:14px 14px 6px;display:flex;align-items:center;justify-content:space-between;}
+.page-title{font-size:1.1rem;font-weight:800;letter-spacing:-.02em;}
+.page-sub{font-size:.65rem;color:var(--muted);margin-top:1px;}
+.page-action{display:flex;gap:6px;}
 
 /* SYNC BAR */
-.sbar{display:flex;align-items:center;justify-content:space-between;padding:6px 15px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:.66rem;}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:5px 15px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:.66rem;}
 .sleft{display:flex;align-items:center;gap:6px;color:var(--muted);}
 .sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 .sdot.on{background:var(--g);box-shadow:0 0 6px rgba(13,230,138,.5);}
@@ -57,12 +88,17 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 .sbtn{font-size:.67rem;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;padding:1px 0;}
 
-/* SUMMARY */
-.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 5px;}
-.sc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);padding:12px 12px 10px;position:relative;overflow:hidden;}
+/* SUMMARY CARDS */
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 12px 5px;}
+.sc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);padding:13px 13px 11px;position:relative;overflow:hidden;transition:.2s;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc.g::before{background:linear-gradient(90deg,var(--g),transparent);}
+.sc.o::before{background:linear-gradient(90deg,var(--o),transparent);}
+.sc.r::before{background:linear-gradient(90deg,var(--r),transparent);}
+.sc.b::before{background:linear-gradient(90deg,var(--bl),transparent);}
 .sc::after{content:'';position:absolute;top:-8px;right:-8px;width:52px;height:52px;border-radius:50%;opacity:.06;}
 .sc.g::after{background:var(--g)}.sc.o::after{background:var(--o)}.sc.r::after{background:var(--r)}.sc.b::after{background:var(--bl)}
-.sc-ico{font-size:1.1rem;margin-bottom:4px;}
+.sc-ico{font-size:1.1rem;margin-bottom:5px;}
 .sc-lbl{font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:2px;}
 .sc-val{font-size:1.15rem;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em;}
 .sc-val.g{color:var(--g)}.sc-val.o{color:var(--o)}.sc-val.r{color:var(--r)}.sc-val.b{color:var(--bl)}
@@ -74,18 +110,28 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 .chip{display:flex;align-items:center;gap:5px;background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:5px 10px;font-size:.66rem;font-weight:600;white-space:nowrap;flex-shrink:0;color:var(--txt2);}
 .cdot{width:6px;height:6px;border-radius:50%;}
 
+/* QUICK ACTIONS */
+.qa-wrap{padding:0 12px 10px;}
+.qa-title{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:7px;}
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.qa-btn{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rads);padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:.15s;text-align:center;}
+.qa-btn:active{background:var(--s2);transform:scale(.95);}
+.qa-ico{font-size:1.1rem;}
+.qa-lbl{font-size:.55rem;font-weight:700;color:var(--txt2);letter-spacing:.02em;}
+
 /* FLOOR */
 .floor-sec{padding:3px 12px 16px;}
-.floor-hd{display:flex;align-items:center;gap:8px;padding:8px 10px 6px;margin-bottom:6px;border-bottom:1px solid var(--b1);}
+.floor-hd{display:flex;align-items:center;gap:8px;padding:7px 10px 6px;margin-bottom:6px;border-bottom:1px solid var(--b1);}
 .floor-tag{font-size:.57rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--ag);color:var(--accent);border:1px solid rgba(245,166,35,.18);}
 .floor-info{font-size:.63rem;color:var(--muted);margin-left:auto;}
+.floor-pct{font-size:.6rem;font-weight:700;color:var(--g);margin-left:6px;}
 
 /* ROOM CARD */
-.rcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);margin-bottom:8px;overflow:hidden;transition:border-color .2s;}
-.rcard.lp{border-left:3px solid var(--g)}.rcard.lo{border-left:3px solid var(--o)}.rcard.lr{border-left:3px solid var(--r)}.rcard.lv{border-left:3px solid var(--bl)}.rcard.ln{border-left:3px solid var(--muted)}
+.rcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);margin-bottom:8px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+.rcard.lp{border-left:3px solid var(--g)}.rcard.lo{border-left:3px solid var(--o)}.rcard.lr{border-left:3px solid var(--r);box-shadow:0 0 12px rgba(255,63,94,.08)}.rcard.lv{border-left:3px solid var(--bl)}.rcard.ln{border-left:3px solid var(--muted)}
 .rhdr{padding:11px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
 .rlft{display:flex;align-items:center;gap:9px;}
-.ravt{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.ravt{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
 .ravt.p{background:var(--gb);color:var(--g);border:1px solid var(--gbr)}
 .ravt.o{background:var(--ob);color:var(--o);border:1px solid var(--obr)}
 .ravt.r{background:var(--rb);color:var(--r);border:1px solid var(--rbr)}
@@ -163,10 +209,9 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 .g2 .btn,.g3 .btn{margin-top:0;font-size:.72rem;padding:9px 6px;}
 
 /* OVERLAYS */
-.ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom,0px));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 .ov.open{display:flex;}
-/* FIX: bottom padding clears the 80px nav bar + device safe area so buttons never get cut */
-.modal{background:var(--s1);border:1px solid var(--b2);border-top-left-radius:18px;border-top-right-radius:18px;padding:18px 16px 26px;width:100%;max-width:520px;max-height:78vh;overflow-y:auto;animation:slideup .22s ease;}
+.modal{background:var(--s1);border:1px solid var(--b2);border-top-left-radius:20px;border-top-right-radius:20px;padding:18px 16px 26px;width:100%;max-width:520px;max-height:80vh;overflow-y:auto;animation:slideup .22s ease;}
 @keyframes slideup{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 .drag{width:32px;height:4px;background:var(--b3);border-radius:2px;margin:0 auto 14px;}
 .mtit{font-size:.95rem;font-weight:800;margin-bottom:2px;}
@@ -193,7 +238,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 .stamp.unpaid{border-color:#dc2626;color:#dc2626;}
 
 /* NOTICES */
-.nwrap{padding:12px 12px 16px;}
+.nwrap{padding:8px 12px 16px;}
 .nc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);padding:12px;margin-bottom:8px;}
 .nc.urg{border-left:3px solid var(--r);}
 .nc.wrn{border-left:3px solid var(--o);}
@@ -209,7 +254,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 .ncact .btn{margin-top:0;font-size:.7rem;padding:7px 10px;flex:1;}
 
 /* HISTORY */
-.rpkr{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 12px 7px;}
+.rpkr{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:6px 12px 7px;}
 .rpkr::-webkit-scrollbar{display:none;}
 .rpill{padding:6px 12px;border-radius:20px;font-size:.7rem;font-weight:700;background:var(--s1);border:1px solid var(--b1);color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:.15s;}
 .rpill.on{background:var(--accent);color:#000;border-color:var(--accent);}
@@ -222,7 +267,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 .hrow.hd:nth-child(even){background:var(--bg2);}
 
 /* YEARLY */
-.ywrap{padding:12px 12px 16px;}
+.ywrap{padding:8px 12px 16px;}
 .ybar{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
 .ylbl{font-size:.9rem;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace;}
 .ytcard{background:linear-gradient(135deg,var(--s2),var(--s3));border:1px solid var(--b2);border-radius:var(--rad);padding:14px;margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;}
@@ -250,24 +295,52 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding
 .sinput{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--rads);color:var(--txt);font-size:.8rem;font-family:'Sora',sans-serif;padding:7px 10px;-webkit-appearance:none;}
 .sinput:focus{outline:none;border-color:var(--accent);}
 select.sinput option{background:var(--s2);}
+.user-info-card{display:flex;align-items:center;gap:11px;padding:14px;}
+.uic-avatar{width:44px;height:44px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;}
+.uic-name{font-size:.85rem;font-weight:700;}
+.uic-email{font-size:.65rem;color:var(--muted);margin-top:2px;}
 
-/* BOTTOM NAV - FIX: .bni is the correct class, removed .bnav-item */
-.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,17,30,.97);border-top:1px solid var(--b1);display:flex;z-index:300;padding-bottom:env(safe-area-inset-bottom,0);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
-.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px 10px;cursor:pointer;border:none;background:none;color:var(--muted);gap:2px;transition:color .2s;position:relative;}
+/* ── BOTTOM NAV ── */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(7,13,26,.98);
+  border-top:1px solid var(--b1);
+  display:flex;z-index:300;
+  padding-bottom:env(safe-area-inset-bottom,0);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  height:var(--bnav-h);
+}
+.bni{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6px 2px 8px;cursor:pointer;border:none;background:none;
+  color:var(--muted);gap:3px;transition:color .2s;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
 .bni.on{color:var(--accent);}
-.bni-ico{font-size:1.1rem;line-height:1;}
-.bni-lbl{font-size:.52rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
-.badge{position:absolute;top:5px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--r);border:1.5px solid var(--bg);}
+.bni-ico-wrap{
+  position:relative;width:36px;height:28px;display:flex;align-items:center;justify-content:center;
+  border-radius:20px;transition:background .2s;
+}
+.bni.on .bni-ico-wrap{background:rgba(245,166,35,.15);}
+.bni-ico{font-size:1.15rem;line-height:1;transition:transform .2s;}
+.bni.on .bni-ico{transform:scale(1.12);}
+.bni-lbl{font-size:.52rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;transition:color .2s;}
+.badge{position:absolute;top:0px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--r);border:1.5px solid var(--bg);}
+/* active indicator pill above icon */
+.bni.on::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:24px;height:2px;background:var(--accent);border-radius:0 0 3px 3px;
+}
 
 /* TOAST */
-.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--s1);border:1px solid var(--b2);border-radius:var(--radx);padding:8px 16px;font-size:.75rem;font-weight:700;z-index:500;opacity:0;transition:.22s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh);display:flex;align-items:center;gap:6px;}
+.toast{position:fixed;bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom,0px) + 8px);left:50%;transform:translateX(-50%) translateY(6px);background:var(--s1);border:1px solid var(--b2);border-radius:var(--radx);padding:8px 16px;font-size:.75rem;font-weight:700;z-index:400;opacity:0;transition:.22s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh);display:flex;align-items:center;gap:6px;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.ok{border-color:var(--gbr);color:var(--g);}
 .toast.err{border-color:var(--rbr);color:var(--r);}
 .toast.info{border-color:var(--blbr);color:var(--bl);}
 
 /* CONFIRM MODAL */
-.cfm-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.cfm-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
 .cfm-ov.open{display:flex;}
 .cfm-modal{background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:22px 20px;width:88%;max-width:320px;animation:zoomin .18s ease;}
 @keyframes zoomin{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
@@ -277,21 +350,75 @@ select.sinput option{background:var(--s2);}
 .cfm-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
 /* DRIVE PROMO */
-.gpromo{background:linear-gradient(135deg,rgba(68,166,255,.08),rgba(13,230,138,.05));border:1px solid rgba(68,166,255,.18);border-radius:var(--rad);padding:11px;margin:10px 12px 3px;display:flex;align-items:flex-start;gap:9px;}
+.gpromo{background:linear-gradient(135deg,rgba(68,166,255,.08),rgba(13,230,138,.05));border:1px solid rgba(68,166,255,.18);border-radius:var(--rad);padding:11px;margin:6px 12px 4px;display:flex;align-items:flex-start;gap:9px;}
 .gp-ico{font-size:1.25rem;flex-shrink:0;}
 .gp-tit{font-size:.8rem;font-weight:700;margin-bottom:2px;}
 .gp-txt{font-size:.7rem;color:var(--txt2);line-height:1.5;}
+
+/* COLLECTION PROGRESS BAR */
+.progress-wrap{padding:4px 12px 8px;}
+.progress-label{display:flex;justify-content:space-between;font-size:.62rem;color:var(--muted);margin-bottom:4px;}
+.progress-bar{background:var(--s2);border-radius:4px;height:6px;overflow:hidden;border:1px solid var(--b1);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--g),var(--a2));border-radius:4px;transition:width .5s ease;}
 
 /* NOTE */
 .note-card{background:var(--s2);border-radius:var(--rads);padding:6px 10px;margin-bottom:5px;font-size:.71rem;color:var(--txt2);border-left:2px solid var(--b3);}
 .note-date{font-size:.58rem;color:var(--muted);margin-bottom:2px;}
 
+/* EMPTY STATE */
 .empty{text-align:center;padding:40px 18px;}
-.empty-ico{font-size:2rem;margin-bottom:8px;}
-.empty-txt{color:var(--muted);font-size:.8rem;}
+.empty-ico{font-size:2.2rem;margin-bottom:8px;}
+.empty-txt{color:var(--muted);font-size:.8rem;line-height:1.6;}
+
+/* SECTION DIVIDERS */
+.sec-wrap{padding:0 12px 16px;}
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-logo">🏠</div>
+  <div class="login-title">RentBook Pro</div>
+  <div class="login-sub">Property Management · Built for Landlords</div>
+  <div class="login-card">
+    <div class="login-card-title">Sign in to continue</div>
+    <button id="g-signin-btn" onclick="doGoogleSignIn()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-spinner" id="loginSpinner">
+      <div class="spin-ring"></div>
+      <span style="font-size:.72rem;color:var(--muted);">Signing in…</span>
+    </div>
+    <div id="redirectUriHint" style="font-size:.6rem;color:var(--muted);margin-top:10px;word-break:break-all;text-align:center;"></div>
+    <div style="border-top:1px solid var(--b2);margin:14px 0 10px;"></div>
+    <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-bottom:8px;">Or enter PIN to access</div>
+    <div style="display:flex;gap:6px;">
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="6"
+        placeholder="Enter PIN"
+        style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:8px;color:var(--txt);font-size:.9rem;padding:10px 12px;font-family:'JetBrains Mono',monospace;letter-spacing:.2em;"
+        onkeydown="if(event.key==='Enter')checkPin()"/>
+      <button onclick="checkPin()"
+        style="background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 14px;font-weight:700;font-size:.8rem;cursor:pointer;">Go</button>
+    </div>
+    <div class="login-err" id="pinErr"></div>
+    <div class="login-note">Access is restricted to authorised users only.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP (hidden until auth)
+══════════════════════════════════════════ -->
+<div id="appRoot" style="display:none;">
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -302,20 +429,14 @@ select.sinput option{background:var(--s2);}
       <div class="brand-sub" id="brandProp">Loading…</div>
     </div>
   </div>
-  <div class="mnav">
-    <button class="mnbtn" onclick="changeMonth(-1)">‹</button>
-    <div class="mnlbl" id="mLabel">—</div>
-    <button class="mnbtn" onclick="changeMonth(1)">›</button>
+  <div class="topbar-right">
+    <div class="mnav">
+      <button class="mnbtn" onclick="changeMonth(-1)">‹</button>
+      <div class="mnlbl" id="mLabel">—</div>
+      <button class="mnbtn" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="user-avatar-placeholder" id="userAvatarBtn" onclick="showUserMenu()" title="Account"></div>
   </div>
-</div>
-
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab-btn on" data-tab="home" onclick="showTab('home')">🏠 Home</button>
-  <button class="tab-btn" data-tab="alerts" onclick="showTab('alerts')">🔔 Alerts</button>
-  <button class="tab-btn" data-tab="history" onclick="showTab('history')">📋 History</button>
-  <button class="tab-btn" data-tab="yearly" onclick="showTab('yearly')">📊 Yearly</button>
-  <button class="tab-btn" data-tab="settings" onclick="showTab('settings')">⚙️ Settings</button>
 </div>
 
 <!-- SYNC BAR -->
@@ -330,17 +451,33 @@ select.sinput option{background:var(--s2);}
 <div id="tab-home">
   <div id="gPromo"></div>
   <div class="sumgrid" id="sumGrid"></div>
+  <div id="collectProgress"></div>
   <div class="chips" id="chips"></div>
+  <div class="qa-wrap">
+    <div class="qa-title">Quick Actions</div>
+    <div class="qa-grid">
+      <div class="qa-btn" onclick="showTab('alerts')"><div class="qa-ico">🔔</div><div class="qa-lbl">Alerts</div></div>
+      <div class="qa-btn" onclick="showTab('history')"><div class="qa-ico">📋</div><div class="qa-lbl">History</div></div>
+      <div class="qa-btn" onclick="exportData()"><div class="qa-ico">💾</div><div class="qa-lbl">Export</div></div>
+      <div class="qa-btn" onclick="showTab('settings')"><div class="qa-ico">⚙️</div><div class="qa-lbl">Settings</div></div>
+    </div>
+  </div>
   <div id="rooms"></div>
 </div>
 
 <!-- ALERTS TAB -->
 <div id="tab-alerts" style="display:none;">
+  <div class="page-header">
+    <div><div class="page-title">🔔 Alerts</div><div class="page-sub" id="alertSubtitle">Loading…</div></div>
+  </div>
   <div class="nwrap" id="alertsWrap"></div>
 </div>
 
 <!-- HISTORY TAB -->
 <div id="tab-history" style="display:none;">
+  <div class="page-header">
+    <div><div class="page-title">📋 History</div><div class="page-sub">Last 36 months per room</div></div>
+  </div>
   <div class="rpkr" id="rpkr"></div>
   <div class="hwrap" id="hwrap"></div>
 </div>
@@ -348,10 +485,13 @@ select.sinput option{background:var(--s2);}
 <!-- YEARLY TAB -->
 <div id="tab-yearly" style="display:none;">
   <div class="ywrap">
-    <div class="ybar">
-      <button class="mnbtn" onclick="changeYear(-1)">‹</button>
-      <div class="ylbl" id="yrLbl">—</div>
-      <button class="mnbtn" onclick="changeYear(1)">›</button>
+    <div class="page-header" style="padding:10px 2px 6px;">
+      <div><div class="page-title">📊 Yearly Report</div></div>
+      <div class="ybar" style="margin:0;">
+        <button class="mnbtn" onclick="changeYear(-1)">‹</button>
+        <div class="ylbl" id="yrLbl">—</div>
+        <button class="mnbtn" onclick="changeYear(1)">›</button>
+      </div>
     </div>
     <div id="yrReport"></div>
   </div>
@@ -360,6 +500,13 @@ select.sinput option{background:var(--s2);}
 <!-- SETTINGS TAB -->
 <div id="tab-settings" style="display:none;">
   <div class="sw">
+    <div class="page-header" style="padding:6px 2px 10px;">
+      <div class="page-title">⚙️ Settings</div>
+    </div>
+
+    <!-- Logged-in user -->
+    <div class="scard" id="userProfileCard"></div>
+
     <div class="scard">
       <div class="scard-hd">☁️ Google Drive Sync</div>
       <div class="srow"><div><div class="srl">Cloud Backup</div><div class="srs">Auto-saves to your Google Drive</div></div><div id="driveWidget"></div></div>
@@ -392,11 +539,11 @@ select.sinput option{background:var(--s2);}
       <div class="srow"><div><div class="srl">Export Backup</div><div class="srs">Download as JSON</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="exportData()">Export</button></div>
       <div class="srow"><div><div class="srl">Import Backup</div><div class="srs">Restore from JSON</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="document.getElementById('impFile').click()">Import</button><input type="file" id="impFile" accept=".json" style="display:none;" onchange="importData(this)"/></div>
     </div>
-    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.62rem;line-height:1.8;">RentBook Pro v4.1 · Zero cost · Offline first · No server</div>
+    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.62rem;line-height:1.8;">RentBook Pro v4.2 · Zero cost · Offline first · No server</div>
   </div>
 </div>
 
-<!-- TENANT MODAL — FIX: inline event.target check, no global `event` dependency -->
+<!-- TENANT MODAL -->
 <div class="ov" id="ovTenant" onclick="if(event.target===this)closeOv('ovTenant')">
   <div class="modal">
     <div class="drag"></div>
@@ -444,34 +591,25 @@ select.sinput option{background:var(--s2);}
   </div>
 </div>
 
-<!-- GOOGLE DRIVE SETUP MODAL -->
+<!-- GOOGLE DRIVE CLIENT-ID MODAL (kept for Drive-only setup, no longer needed for login) -->
 <div class="ov" id="ovClientID" onclick="if(event.target===this)closeOv('ovClientID')">
   <div class="modal">
     <div class="drag"></div>
-    <div class="mtit">☁️ Connect Google Drive</div>
-    <div class="msub">Paste your OAuth 2.0 Client ID below</div>
-
+    <div class="mtit">☁️ Connect Google Drive Backup</div>
+    <div class="msub">Paste your OAuth 2.0 Client ID to enable auto-backup</div>
     <div style="background:var(--s2);border:1px solid var(--b2);border-radius:var(--rads);padding:11px 13px;margin-bottom:12px;font-size:.72rem;line-height:1.9;color:var(--txt2);">
       <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">📋 How to get your Client ID (one-time setup)</div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">1</span> &nbsp;Go to <span style="color:var(--bl);font-weight:600;">console.cloud.google.com</span></div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">2</span> &nbsp;Click top dropdown → <b>New Project</b> → any name → <b>Create</b></div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">3</span> &nbsp;Left menu → <b>APIs &amp; Services → Library</b> → search <b>Google Drive API</b> → Enable</div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">4</span> &nbsp;Left menu → <b>Credentials → + Create Credentials → OAuth 2.0 Client ID</b></div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">5</span> &nbsp;If asked: Configure consent screen → External → add App name → Save &amp; Continue (skip rest)</div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">6</span> &nbsp;Application type → <b>Web application</b></div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">7</span> &nbsp;Authorized JavaScript origins → click <b>Add URI</b> → paste the URL from your browser address bar</div>
-      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">8</span> &nbsp;Click <b>Create</b> → a popup shows your keys → copy the <b>Client ID</b> (not the secret!)</div>
-      <div style="margin-top:6px;padding:6px 8px;background:rgba(245,166,35,.1);border-radius:6px;border:1px solid rgba(245,166,35,.2);color:var(--accent);font-size:.68rem;">
-        💡 Client ID looks like: <span style="font-family:monospace;">123456789-abc.apps.googleusercontent.com</span>
-      </div>
+      <div><b>1</b> &nbsp;Go to <span style="color:var(--bl);font-weight:600;">console.cloud.google.com</span></div>
+      <div><b>2</b> &nbsp;New Project → APIs &amp; Services → Library → Enable <b>Google Drive API</b></div>
+      <div><b>3</b> &nbsp;Credentials → + OAuth 2.0 Client ID → Web application</div>
+      <div><b>4</b> &nbsp;Add your site URL as Authorised JavaScript origin</div>
+      <div><b>5</b> &nbsp;Copy the Client ID</div>
     </div>
-
     <div class="fg" style="margin-bottom:6px;">
       <label class="flbl">Client ID *</label>
       <input class="fin" id="cidInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="font-size:.74rem;" oninput="document.getElementById('cidErr').textContent=''"/>
     </div>
     <div id="cidErr" style="font-size:.66rem;color:var(--r);min-height:16px;margin-bottom:8px;line-height:1.4;"></div>
-
     <div class="mact">
       <button class="btn btn-gh" onclick="closeOv('ovClientID')">Cancel</button>
       <button class="btn btn-acc" onclick="saveClientID()">Connect →</button>
@@ -479,7 +617,18 @@ select.sinput option{background:var(--s2);}
   </div>
 </div>
 
-<!-- CONFIRM MODAL — replaces browser confirm() which is blocked on some mobile WebViews -->
+<!-- USER MENU MODAL -->
+<div class="ov" id="ovUserMenu" onclick="if(event.target===this)closeOv('ovUserMenu')">
+  <div class="modal">
+    <div class="drag"></div>
+    <div id="userMenuBody"></div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-r" onclick="doSignOut()">🚪 Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
 <div class="cfm-ov" id="cfmOv">
   <div class="cfm-modal">
     <div class="cfm-ico" id="cfmIco">⚠️</div>
@@ -494,107 +643,369 @@ select.sinput option{background:var(--s2);}
 
 <!-- BOTTOM NAV -->
 <div class="bnav">
-  <button class="bni on" id="bn-home" onclick="showTab('home')"><span class="bni-ico">🏠</span><span class="bni-lbl">Home</span></button>
-  <button class="bni" id="bn-alerts" onclick="showTab('alerts')"><span class="bni-ico">🔔</span><span class="bni-lbl">Alerts</span><span class="badge" id="alertBadge" style="display:none;"></span></button>
-  <button class="bni" id="bn-history" onclick="showTab('history')"><span class="bni-ico">📋</span><span class="bni-lbl">History</span></button>
-  <button class="bni" id="bn-yearly" onclick="showTab('yearly')"><span class="bni-ico">📊</span><span class="bni-lbl">Yearly</span></button>
-  <button class="bni" id="bn-settings" onclick="showTab('settings')"><span class="bni-ico">⚙️</span><span class="bni-lbl">Settings</span></button>
+  <button class="bni on" id="bn-home" onclick="showTab('home')">
+    <div class="bni-ico-wrap"><span class="bni-ico">🏠</span></div>
+    <span class="bni-lbl">Home</span>
+  </button>
+  <button class="bni" id="bn-alerts" onclick="showTab('alerts')">
+    <div class="bni-ico-wrap"><span class="bni-ico">🔔</span><span class="badge" id="alertBadge" style="display:none;"></span></div>
+    <span class="bni-lbl">Alerts</span>
+  </button>
+  <button class="bni" id="bn-history" onclick="showTab('history')">
+    <div class="bni-ico-wrap"><span class="bni-ico">📋</span></div>
+    <span class="bni-lbl">History</span>
+  </button>
+  <button class="bni" id="bn-yearly" onclick="showTab('yearly')">
+    <div class="bni-ico-wrap"><span class="bni-ico">📊</span></div>
+    <span class="bni-lbl">Yearly</span>
+  </button>
+  <button class="bni" id="bn-settings" onclick="showTab('settings')">
+    <div class="bni-ico-wrap"><span class="bni-ico">⚙️</span></div>
+    <span class="bni-lbl">Settings</span>
+  </button>
 </div>
 
+</div><!-- /appRoot -->
+
+<!-- Google Identity Services -->
+
+
 <script>
-/* ================================================================
+/* ════════════════════════════════════════════════════════════════
+   ██████╗ ███████╗███╗   ██╗████████╗██████╗  ██████╗  ██████╗ ██╗  ██╗
+   RENTBOOK PRO v4.2
+   ════════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────
+   🔐 ACCESS CONTROL
+   Add your Google email(s) to this list.
+   Only these users can log in.
+   ────────────────────────────────────────────── */
+const ALLOWED_EMAILS = [
+  'y.y02222@gmail.com',
+  'aartiyadav6100@gmail.com',
+];
+
+/* ──────────────────────────────────────────────
+   🔑 GOOGLE AUTH CONFIG
+   Replace with your OAuth Client ID.
+   This is the SAME client ID used for Drive.
+   Only needs to be set once here in the code.
+   ────────────────────────────────────────────── */
+const GOOGLE_CLIENT_ID = '666638327243-6ter1gind8mmec287v5fdp967p8786j0.apps.googleusercontent.com';
+
+/* ════════════════════════════════════════════════
    STORAGE HELPERS
-   - gd/sd  : JSON get/set for app data (bills, rooms, settings)
-   - lsRaw  : raw string get/set for tokens and timestamps
-   ================================================================ */
+   ════════════════════════════════════════════════ */
 function gd(k,fb){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}}
 function sd(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{toast('Storage full!','err');}}
-// FIX: token is stored as plain string, never JSON-wrapped — avoids double-quote bug
 function lsRaw(k,v){
   if(v===undefined)try{return localStorage.getItem(k);}catch{return null;}
   try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){}
 }
 
-/* ================================================================
-   GOOGLE DRIVE ENGINE
-   ================================================================ */
-const GD={FILE:'rentbook-pro-data.json',SCOPE:'https://www.googleapis.com/auth/drive.appdata'};
-let _gisOk=false,_gapiOk=false,_tc=null,_gTok=null,_gFid=null,_syncTimer=null;
+/* ════════════════════════════════════════════════
+   AUTH STATE
+   ════════════════════════════════════════════════ */
+let _authUser = null; // {name, email, picture}
 
-function loadGScripts(cid){
-  if(!cid)return;
-  if(!document.getElementById('_gis')){
-    const s=document.createElement('script');s.id='_gis';s.src='https://accounts.google.com/gsi/client';
-    s.onload=()=>_initGIS(cid);document.head.appendChild(s);
+/* ════════════════════════════════════════════════
+   AUTH FLOW — OAuth 2.0 implicit redirect
+   ════════════════════════════════════════════════
+   TWO modes handled here:
+   A) FRESH LOGIN  — user on login screen taps "Continue with Google"
+   B) DRIVE RECONNECT — user already in app, taps "Connect Drive" to get a fresh token
+
+   In both cases Google redirects back to this same URL with #access_token in the hash.
+   We distinguish them with lsRaw('_rb_reconnect'):
+     null / missing = fresh login
+     '1'            = drive reconnect (session already exists in rb_authuser)
+   ════════════════════════════════════════════════ */
+
+function initAuth(){
+  const hash = window.location.hash || '';
+
+  // ── Step 1: Did Google redirect back to us? ──
+  if(hash.includes('access_token') || hash.includes('error')){
+    const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+    const token     = params.get('access_token') || '';
+    const error     = params.get('error') || '';
+    const retState  = params.get('state') || '';
+    const savedState= lsRaw('_rb_ostate') || '';
+    const mode      = lsRaw('_rb_reconnect') || 'login'; // 'login' | 'reconnect'
+
+    // Clean up URL and temp keys
+    window.history.replaceState({}, document.title, window.location.pathname);
+    lsRaw('_rb_ostate', null);
+    lsRaw('_rb_reconnect', null);
+
+    // State mismatch — security check
+    if(savedState && retState && retState !== savedState){
+      _showLoginScreen('Security check failed. Please try again.');
+      return;
+    }
+
+    if(mode === 'reconnect'){
+      // ── DRIVE RECONNECT path ──
+      // Restore existing session regardless of token success/fail
+      const raw = lsRaw('rb_authuser');
+      if(raw){ try{ _authUser = JSON.parse(raw); }catch(e){} }
+
+      if(token){
+        lsRaw('rb_gtok', token);
+        _gTok = token;
+        _showApp();
+        setTimeout(function(){
+          _applyConnected();
+          forceSyncNow();
+          toast('Drive connected ✓','ok');
+        }, 600);
+      } else {
+        // Token failed — show app without Drive
+        _showApp();
+        setTimeout(function(){
+          _syncUI('err', error === 'access_denied' ? 'Drive access denied' : 'Drive connect failed — tap to retry');
+          const sact = document.getElementById('sact');
+          if(sact){ sact.textContent = 'Connect Drive'; sact.disabled = false; }
+        }, 400);
+      }
+      return;
+    }
+
+    // ── FRESH LOGIN path ──
+    if(!token){
+      _showLoginScreen(error ? 'Google sign-in error: ' + error : 'Sign-in failed — no token returned.');
+      return;
+    }
+    _showLoginScreen(''); // show login screen while we verify
+    _processToken(token);
+    return;
   }
-  if(!document.getElementById('_gapi')){
-    const s=document.createElement('script');s.id='_gapi';s.src='https://apis.google.com/js/api.js';
-    s.onload=()=>gapi.load('client',_initGAPI);document.head.appendChild(s);
+
+  // ── Step 2: Check for persisted session ──
+  const saved = lsRaw('rb_authuser');
+  if(saved){
+    try{
+      _authUser = JSON.parse(saved);
+      _showApp();
+      return;
+    }catch(e){ lsRaw('rb_authuser', null); }
+  }
+
+  // ── Step 3: No session — show login ──
+  _showLoginScreen('');
+}
+
+function _showLoginScreen(err){
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginSpinner').classList.remove('show');
+  document.getElementById('g-signin-btn').style.display = 'flex';
+  if(err) document.getElementById('loginErr').textContent = err;
+  // Show the redirect URI for debugging
+  const hintEl = document.getElementById('redirectUriHint');
+  if(hintEl){
+    const uri = window.location.origin + window.location.pathname;
+    hintEl.innerHTML = '🔗 Redirect URI: <span style="color:var(--bl);">' + uri + '</span>';
   }
 }
-function _initGIS(cid){
-  _tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GD.SCOPE,callback:_onTok});
-  _gisOk=true;_gCheck();
+
+function doGoogleSignIn(){
+  if(!GOOGLE_CLIENT_ID){
+    document.getElementById('loginErr').textContent = '⚠️ No Client ID configured.';
+    return;
+  }
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginSpinner').classList.add('show');
+  document.getElementById('g-signin-btn').style.display = 'none';
+  _oauthRedirect('login', 'select_account', '');
 }
-async function _initGAPI(){
-  await gapi.client.init({});
-  await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
-  _gapiOk=true;_gCheck();
+
+function _oauthRedirect(mode, prompt, loginHint){
+  const redirectUri = window.location.origin + window.location.pathname;
+  const state = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  lsRaw('_rb_ostate', state);
+  lsRaw('_rb_reconnect', mode); // 'login' or 'reconnect'
+  const params = {
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'token',
+    scope: 'email profile https://www.googleapis.com/auth/drive.appdata',
+    state: state,
+    include_granted_scopes: 'true',
+  };
+  if(prompt) params.prompt = prompt;
+  if(loginHint) params.login_hint = loginHint;
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(params).toString();
 }
-function _gCheck(){
-  if(!_gisOk||!_gapiOk)return;
-  // FIX: token stored as plain string via lsRaw — no JSON wrapping
+
+async function _processToken(token){
+  document.getElementById('loginSpinner').classList.add('show');
+  document.getElementById('g-signin-btn').style.display = 'none';
+  try{
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const info = await r.json();
+    if(!info.email){
+      _showLoginScreen('Could not read Google account. Try again.');
+      return;
+    }
+    if(ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.map(e=>e.toLowerCase()).includes(info.email.toLowerCase())){
+      _showLoginScreen('⛔ Access denied. ' + info.email + ' is not authorised.');
+      return;
+    }
+    _authUser = {name: info.name||info.email, email: info.email, picture: info.picture||''};
+    lsRaw('rb_authuser', JSON.stringify(_authUser));
+    lsRaw('rb_gtok', token);
+    _gTok = token;
+    _showApp();
+    // Drive auto-connects since we have the token from login
+    setTimeout(function(){ _applyConnected(); forceSyncNow(); }, 800);
+  }catch(e){
+    _showLoginScreen('Network error. Check connection and try again.');
+  }
+}
+
+function checkPin(){
+  const OWNER_PIN = '1234';
+  const val = (document.getElementById('pinInput').value||'').trim();
+  if(!val){ document.getElementById('pinErr').textContent='Enter your PIN.'; return; }
+  if(val !== OWNER_PIN){
+    document.getElementById('pinErr').textContent='⛔ Wrong PIN.';
+    document.getElementById('pinInput').value='';
+    return;
+  }
+  _authUser = {name:'Owner', email:'pin-auth', picture:''};
+  lsRaw('rb_authuser', JSON.stringify(_authUser));
+  _showApp();
+}
+
+function _showApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'block';
+  _renderUserAvatar();
+  init();
+}
+
+function _renderUserAvatar(){
+  if(!_authUser) return;
+  const btn = document.getElementById('userAvatarBtn');
+  if(_authUser.picture){
+    btn.outerHTML = `<img src="${_authUser.picture}" class="user-avatar" id="userAvatarBtn" onclick="showUserMenu()" referrerpolicy="no-referrer"/>`;
+  } else {
+    btn.textContent = (_authUser.name||'U')[0].toUpperCase();
+  }
+}
+
+function showUserMenu(){
+  const u = _authUser || {};
+  document.getElementById('userMenuBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      ${u.picture ? `<img src="${u.picture}" class="uic-avatar" referrerpolicy="no-referrer"/>` : `<div style="width:44px;height:44px;border-radius:50%;background:var(--ag);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:var(--accent);">${(u.name||'U')[0]}</div>`}
+      <div><div class="uic-name">${escH(u.name||'User')}</div><div class="uic-email">${escH(u.email||'')}</div></div>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--rads);padding:9px 12px;font-size:.71rem;color:var(--txt2);margin-bottom:4px;">
+      🔒 Signed in securely via Google
+    </div>`;
+  openOv('ovUserMenu');
+}
+
+function doSignOut(){
+  closeOv('ovUserMenu');
+  showConfirm('🚪 Sign Out', 'You will be signed out of RentBook Pro.', 'Sign Out', function(){
+    lsRaw('rb_authuser', null);
+    _authUser = null;
+    // Clear Drive token too
+    lsRaw('rb_gtok', null);
+    _gTok = null;
+    location.reload();
+  }, 'btn-r');
+}
+
+/* ════════════════════════════════════════════════
+   GOOGLE DRIVE ENGINE
+   — No GIS script needed. Token comes from login OAuth flow.
+   — Uses fetch() directly against Drive REST API.
+   ════════════════════════════════════════════════ */
+const GD={FILE:'rentbook-pro-data.json'};
+let _gTok=null,_gFid=null,_syncTimer=null,_syncLock=false;
+
+// Called from init() — restore token from storage and connect
+function _driveInit(){
   const tok=lsRaw('rb_gtok');
-  if(tok){_gTok=tok;gapi.client.setToken({access_token:tok});_applyConnected();_schedSync();}
-  else{_syncUI('','Not connected to Drive');_renderDriveW(false);}
+  if(tok){_gTok=tok;_applyConnected();}
+  else{_syncUI('','Not connected');_renderDriveW(false);}
 }
-function _onTok(r){
-  if(r.error){toast('Auth failed','err');return;}
-  _gTok=r.access_token;
-  // FIX: save token as plain string, not JSON
-  lsRaw('rb_gtok',_gTok);
-  gapi.client.setToken({access_token:_gTok});
-  _applyConnected();toast('Google Drive connected ✓','ok');forceSyncNow();
-}
+
 function _applyConnected(){
-  _syncUI('on','Connected to Google Drive');
-  document.getElementById('sact').textContent='Sync Now';
-  document.getElementById('driveFileRow').style.display='';
+  _syncUI('on','Backed up to Drive');
+  const sact=document.getElementById('sact');if(sact)sact.textContent='Sync Now';
+  const dfr=document.getElementById('driveFileRow');if(dfr)dfr.style.display='';
   _renderDriveW(true);
+  _schedSync();
 }
+
+// Sync button: if token exists → sync now; if not → reconnect Drive via OAuth
 function handleSyncBtn(){
-  const s=getSettings();
-  if(!s.googleClientId){_promptCID();return;}
-  if(!_gTok){
-    if(!_gisOk){loadGScripts(s.googleClientId);setTimeout(handleSyncBtn,1600);return;}
-    _tc.requestAccessToken({prompt:'consent'});
-  } else {forceSyncNow();}
+  if(_gTok){forceSyncNow();return;}
+  _driveReconnect();
 }
+
+function _driveReconnect(){
+  const sact=document.getElementById('sact');
+  if(sact){sact.textContent='Connecting…';sact.disabled=true;}
+  _syncUI('spin','Connecting to Drive…');
+  // Use 'reconnect' mode — on return, initAuth() restores the session + connects Drive
+  // prompt:'none' = silent if user already has Google session (no password prompt)
+  _oauthRedirect('reconnect','none',(_authUser&&_authUser.email)||'');
+}
+
+// Legacy stubs
+function loadGScripts(){}
+function _initGIS(){}
 function _schedSync(){clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
 async function forceSyncNow(){
   if(!_gTok)return;
+  if(_syncLock)return;
+  _syncLock=true;
   _syncUI('spin','Syncing…');
   try{
     const json=JSON.stringify(_buildDump());
     if(!_gFid)_gFid=await _findOrCreate();
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_gFid}?uploadType=media`,{
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_gFid}?uploadType=media`,{
       method:'PATCH',headers:{'Authorization':`Bearer ${_gTok}`,'Content-Type':'application/json'},body:json
     });
+    if(res.status===401){throw new Error('401');}
     const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     lsRaw('rb_lsync',ts);
     const lsEl=document.getElementById('lastSync');if(lsEl)lsEl.textContent=ts;
-    _syncUI('on','Synced · '+ts);
+    _syncUI('on','Backed up · '+ts);
     document.getElementById('sact').textContent='Sync Now';
   }catch(e){
     if(String(e).includes('401')){lsRaw('rb_gtok',null);_gTok=null;_syncUI('err','Session expired – tap Reconnect');document.getElementById('sact').textContent='Reconnect';}
     else _syncUI('err','Sync failed – tap to retry');
+  }finally{
+    _syncLock=false;
   }
 }
 async function _findOrCreate(){
-  const r=await gapi.client.drive.files.list({spaces:'appDataFolder',q:`name='${GD.FILE}'`,fields:'files(id)'});
-  if(r.result.files&&r.result.files.length)return r.result.files[0].id;
-  const c=await gapi.client.drive.files.create({resource:{name:GD.FILE,parents:['appDataFolder']},fields:'id'});
-  return c.result.id;
+  // List files in appDataFolder via REST (no gapi.client needed)
+  const listRes=await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${encodeURIComponent("name='"+GD.FILE+"'")}&fields=files(id)`,
+    {headers:{Authorization:'Bearer '+_gTok}}
+  );
+  if(listRes.status===401)throw new Error('401');
+  const listJson=await listRes.json();
+  if(listJson.files&&listJson.files.length)return listJson.files[0].id;
+  // Create the file
+  const meta={name:GD.FILE,parents:['appDataFolder']};
+  const createRes=await fetch(
+    'https://www.googleapis.com/drive/v3/files?fields=id',
+    {method:'POST',headers:{Authorization:'Bearer '+_gTok,'Content-Type':'application/json'},body:JSON.stringify(meta)}
+  );
+  if(createRes.status===401)throw new Error('401');
+  const createJson=await createRes.json();
+  return createJson.id;
 }
 function _syncUI(state,txt){
   const d=document.getElementById('sdot');if(d)d.className='sdot'+(state?' '+state:'');
@@ -616,7 +1027,7 @@ function disconnectDrive(){
   toast('Disconnected','info');
 }
 function _promptCID(){
-  const existing=getSettings().googleClientId||'';
+  const existing=getSettings().googleClientId||GOOGLE_CLIENT_ID||'';
   setTimeout(()=>{const el=document.getElementById('cidInput');if(el){el.value=existing;document.getElementById('cidErr').textContent='';}},60);
   openOv('ovClientID');
 }
@@ -625,16 +1036,13 @@ function saveClientID(){
   const errEl=document.getElementById('cidErr');
   if(!id){errEl.textContent='Please paste your Client ID.';return;}
   if(!id.includes('.apps.googleusercontent.com')){
-    errEl.textContent='⚠️ Double-check: Client ID should end with .apps.googleusercontent.com';
-    // soft warning only — still allow save
-  } else {
-    errEl.textContent='';
-  }
+    errEl.textContent='⚠️ Should end with .apps.googleusercontent.com';
+  } else { errEl.textContent=''; }
   const s=getSettings();s.googleClientId=id;sd('rb_settings',s);
   closeOv('ovClientID');
-  loadGScripts(id);
+  _initGIS(id);loadGScripts(id);
   toast('Client ID saved. Connecting…','info');
-  setTimeout(()=>{if(_tc)_tc.requestAccessToken({prompt:'consent'});else{loadGScripts(id);setTimeout(()=>{if(_tc)_tc.requestAccessToken({prompt:'consent'});},1500);}},1800);
+  setTimeout(()=>{if(_tc)_tc.requestAccessToken({prompt:'consent'});},1800);
 }
 function _buildDump(){
   const d={};
@@ -643,9 +1051,9 @@ function _buildDump(){
 }
 function _restoreDump(d){Object.entries(d).forEach(([k,v])=>{if(k.startsWith('rb_'))localStorage.setItem(k,v);});}
 
-/* ================================================================
+/* ════════════════════════════════════════════════
    APP DATA
-   ================================================================ */
+   ════════════════════════════════════════════════ */
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DROOMS=[
   {id:1,floor:'Ground',rent:4500,due:24},{id:2,floor:'Ground',rent:9000,due:1},
@@ -657,7 +1065,6 @@ const DSET={propertyName:'My Property',elecRate:8,landlordName:'',landlordPhone:
 let curM,curY,selY,openPanels=new Set(),histRoom=null,yrExpanded=new Set();
 let _tmRoom=null,_vmRoom=null,_rcptData=null,_cfmCb=null;
 
-/* ─── SETTINGS ─── */
 function getSettings(){return{...DSET,...gd('rb_settings',{})};}
 function saveSetting(k,v){
   const s=getSettings();s[k]=v;sd('rb_settings',s);
@@ -665,19 +1072,16 @@ function saveSetting(k,v){
   toast('Saved ✓','ok');_schedSync();
 }
 
-/* ─── ROOMS ─── */
 function getRooms(){
   let r=gd('rb_rooms',null);
   if(!r){
     r=DROOMS.map(x=>({...x,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''}));
     sd('rb_rooms',r);
   }
-  // FIX: always coerce id to Number to keep type consistent in memory
   return r.map(x=>({lastMeterReading:0,tenantName:'',tenantPhone:'',deposit:0,moveInDate:'',...x,id:Number(x.id)}));
 }
 function saveRooms(r){sd('rb_rooms',r);_schedSync();}
 
-/* ─── BILLS — KEY IS ALWAYS String(id) to survive JSON round-trips ─── */
 function mKey(y,m){return`${y}-${String(m+1).padStart(2,'0')}`;}
 function getMonthBills(y,m){return gd(`rb_bill_${mKey(y,m)}`,{});}
 function saveMonthBills(y,m,d){sd(`rb_bill_${mKey(y,m)}`,d);_schedSync();}
@@ -685,16 +1089,12 @@ function getRoomBill(y,m,id){return getMonthBills(y,m)[String(id)]||null;}
 function saveRoomBill(y,m,id,rec){const b=getMonthBills(y,m);b[String(id)]=rec;saveMonthBills(y,m,b);}
 function deleteRoomBill(y,m,id){const b=getMonthBills(y,m);delete b[String(id)];saveMonthBills(y,m,b);}
 
-/* ─── TENANT LOG & NOTES ─── */
 function addTenantLog(id,e){const k=`rb_tlog_${id}`;const h=gd(k,[]);h.push(e);sd(k,h);}
 function getTenantLog(id){return gd(`rb_tlog_${id}`,[]);}
 function addNote(id,note){const k=`rb_notes_${id}`;const n=gd(k,[]);n.push({note,dt:new Date().toISOString()});sd(k,n);}
 function getNotes(id){return gd(`rb_notes_${id}`,[]);}
-
-/* ─── RECEIPT SEQ ─── */
 function nextRcptNo(){const n=(gd('rb_rcpt_seq',0)||0)+1;sd('rb_rcpt_seq',n);return String(n).padStart(4,'0');}
 
-/* ─── STATUS ─── */
 function getStatus(room,bill,y,m){
   if(!room.tenantName||!room.tenantName.trim())return 'v';
   if(!bill)return 'n';
@@ -708,39 +1108,48 @@ const SLBL={p:'Paid',o:'Pending',r:'Overdue',v:'Vacant',n:'No Entry'};
 function isDueSoon(room){const t=new Date(),d=new Date(t.getFullYear(),t.getMonth(),room.due),diff=(d-t)/864e5;return diff>=0&&diff<=3;}
 function daysLeft(room){return Math.max(0,Math.round((new Date(new Date().getFullYear(),new Date().getMonth(),room.due)-new Date())/864e5));}
 
-/* ================================================================
+/* ════════════════════════════════════════════════
    RENDER DASHBOARD
-   ================================================================ */
+   ════════════════════════════════════════════════ */
 function renderDashboard(){
   const rooms=getRooms(),settings=getSettings();
-  let col=0,pen=0,ov=0,vac=0,occ=0,paidC=0,ovC=0,penC=0;
+  let col=0,pen=0,ov=0,vac=0,occ=0,paidC=0,ovC=0,penC=0,totalExpected=0;
   rooms.forEach(r=>{
     const b=getRoomBill(curY,curM,r.id),s=getStatus(r,b,curY,curM);
     if(s==='v'){vac++;return;}
     occ++;
+    totalExpected+=r.rent;
     if(s==='p'){col+=b.total;paidC++;}
-    else if(s==='r'&&b){ov+=b.total;ovC++;}
-    else if(s==='o'&&b){pen+=b.total;penC++;}
+    else if(s==='r'){if(b)ov+=b.total;ovC++;}
+    else if(s==='o'){if(b)pen+=b.total;penC++;}
   });
 
   document.getElementById('sumGrid').innerHTML=`
-    <div class="sc g"><div class="sc-ico">💰</div><div class="sc-lbl">Collected</div><div class="sc-val g">₹${fmt(col)}</div><div class="sc-sub">${paidC} paid</div></div>
-    <div class="sc o"><div class="sc-ico">⏳</div><div class="sc-lbl">Pending</div><div class="sc-val o">₹${fmt(pen)}</div><div class="sc-sub">${penC} rooms</div></div>
-    <div class="sc r"><div class="sc-ico">🚨</div><div class="sc-lbl">Overdue</div><div class="sc-val r">₹${fmt(ov)}</div><div class="sc-sub">${ovC} rooms</div></div>
-    <div class="sc b"><div class="sc-ico">🏠</div><div class="sc-lbl">Occupancy</div><div class="sc-val b">${rooms.length?Math.round(occ/rooms.length*100):0}%</div><div class="sc-sub">${occ}/${rooms.length}</div></div>`;
+    <div class="sc g"><div class="sc-ico">💰</div><div class="sc-lbl">Collected</div><div class="sc-val g">₹${fmt(col)}</div><div class="sc-sub">${paidC} of ${occ} rooms</div></div>
+    <div class="sc o"><div class="sc-ico">⏳</div><div class="sc-lbl">Pending</div><div class="sc-val o">₹${fmt(pen+ov)}</div><div class="sc-sub">${penC+ovC} rooms due</div></div>
+    <div class="sc r"><div class="sc-ico">🚨</div><div class="sc-lbl">Overdue</div><div class="sc-val r">₹${fmt(ov)}</div><div class="sc-sub">${ovC} overdue</div></div>
+    <div class="sc b"><div class="sc-ico">🏠</div><div class="sc-lbl">Occupancy</div><div class="sc-val b">${rooms.length?Math.round(occ/rooms.length*100):0}%</div><div class="sc-sub">${occ}/${rooms.length} rooms</div></div>`;
+
+  // Collection progress bar
+  const pct = totalExpected > 0 ? Math.min(100, Math.round(col/totalExpected*100)) : 0;
+  document.getElementById('collectProgress').innerHTML=`
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Collection Progress – ${MONTHS[curM]}</span><span style="color:var(--g);font-weight:700;">${pct}%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
 
   const elecCol=rooms.reduce((a,r)=>{const b=getRoomBill(curY,curM,r.id);return a+(b&&b.paid?b.electricity:0);},0);
   document.getElementById('chips').innerHTML=`
     <div class="chip"><div class="cdot" style="background:var(--pu)"></div>Elec: ₹${fmt(elecCol)}</div>
-    <div class="chip"><div class="cdot" style="background:var(--o)"></div>Total Due: ₹${fmt(pen+ov)}</div>
+    <div class="chip"><div class="cdot" style="background:var(--o)"></div>Expected: ₹${fmt(totalExpected)}</div>
     <div class="chip"><div class="cdot" style="background:var(--bl)"></div>Vacant: ${vac}</div>
     <div class="chip"><div class="cdot" style="background:var(--g)"></div>${MONTHS[curM].slice(0,3)} ${curY}</div>`;
 
   const s=getSettings(),tok=lsRaw('rb_gtok');
-  document.getElementById('gPromo').innerHTML=(!s.googleClientId&&!tok)?`
+  document.getElementById('gPromo').innerHTML=(!s.googleClientId&&!tok&&!GOOGLE_CLIENT_ID)?`
     <div class="gpromo"><div class="gp-ico">☁️</div><div>
-      <div class="gp-tit">Enable Google Drive Backup</div>
-      <div class="gp-txt">Auto-save every change. Safe if phone is lost or browser storage clears.</div>
+      <div class="gp-tit">Enable Google Drive Auto-Backup</div>
+      <div class="gp-txt">Add your Client ID in Settings to auto-save every change.</div>
       <div style="margin-top:8px;"><button class="btn btn-acc" style="width:auto;padding:6px 13px;margin:0;font-size:.73rem;" onclick="showTab('settings')">Set Up →</button></div>
     </div></div>`:'';
 
@@ -750,7 +1159,8 @@ function renderDashboard(){
   floors.forEach(fl=>{
     const fr=rooms.filter(r=>r.floor===fl);
     const fp=fr.filter(r=>getStatus(r,getRoomBill(curY,curM,r.id),curY,curM)==='p').length;
-    html+=`<div class="floor-sec"><div class="floor-hd"><div class="floor-tag">${fl} Floor</div><div class="floor-info">${fp}/${fr.length} paid</div></div>`;
+    const fo=fr.filter(r=>getStatus(r,getRoomBill(curY,curM,r.id),curY,curM)==='r').length;
+    html+=`<div class="floor-sec"><div class="floor-hd"><div class="floor-tag">${fl} Floor</div><div class="floor-info">${fp}/${fr.length} paid${fo>0?`<span style="color:var(--r);margin-left:6px;">· ${fo} overdue</span>`:''}</div></div>`;
     fr.forEach(r=>html+=renderRoomCard(r,getRoomBill(curY,curM,r.id),settings));
     html+='</div>';
   });
@@ -767,12 +1177,18 @@ function renderRoomCard(room,bill,settings){
   const total=bill?bill.total:0;
   const lmap={p:'lp',o:'lo',r:'lr',v:'lv',n:'ln'};
   const ds=!isV&&!bill&&isDueSoon(room);
+  // Tenure badge
+  let tenure='';
+  if(!isV&&room.moveInDate){
+    const months=Math.max(0,Math.floor((new Date()-new Date(room.moveInDate))/(1000*60*60*24*30)));
+    if(months>0) tenure=`<span style="font-size:.55rem;color:var(--pu);background:var(--pub);border:1px solid var(--pubr);border-radius:8px;padding:1px 5px;margin-left:4px;">${months}mo</span>`;
+  }
   return `<div class="rcard ${lmap[s]}" id="rc-${room.id}">
     <div class="rhdr" onclick="togglePanel(${room.id})">
       <div class="rlft">
         <div class="ravt ${s}">${room.id}</div>
         <div>
-          <div class="rname">${isV?'<span style="color:var(--muted);font-style:italic;font-weight:400">Vacant</span>':escH(room.tenantName)}${ds?`<span class="duewarn">⚡ ${daysLeft(room)}d</span>`:''}</div>
+          <div class="rname">${isV?'<span style="color:var(--muted);font-style:italic;font-weight:400">Vacant</span>':escH(room.tenantName)}${tenure}${ds?`<span class="duewarn">⚡ ${daysLeft(room)}d</span>`:''}</div>
           <div class="rdet">₹${fmt(room.rent)}/mo · Due ${room.due}${sfx(room.due)}</div>
         </div>
       </div>
@@ -805,7 +1221,7 @@ function renderPanel(room,bill,settings,s){
   let h=`<div class="pi">
     <div class="ig">
       <div class="ic"><div class="icl">Tenant</div><div class="icv" style="font-size:.76rem;">${escH(room.tenantName)}</div></div>
-      <div class="ic"><div class="icl">Mobile</div><div class="icv" style="font-size:.76rem;">${room.tenantPhone||'—'}</div></div>
+      <div class="ic"><div class="icl">Mobile</div><div class="icv" style="font-size:.76rem;">${room.tenantPhone?`<a href="tel:${room.tenantPhone}" style="color:var(--bl);text-decoration:none;">${room.tenantPhone}</a>`:'—'}</div></div>
       <div class="ic"><div class="icl">Move-in</div><div class="icv" style="font-size:.72rem;">${fmtD(room.moveInDate)}</div></div>
       <div class="ic"><div class="icl">Deposit</div><div class="icv">₹${fmt(room.deposit||0)}</div></div>
     </div>`;
@@ -870,7 +1286,7 @@ function renderPanel(room,bill,settings,s){
   return h;
 }
 
-/* ─── LIVE CALC ─── */
+/* ── LIVE CALC ── */
 function liveCalc(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
   if(!room)return;
@@ -891,7 +1307,7 @@ function liveCalc(rid){
   </div>`;
 }
 
-/* ─── SAVE BILL ─── */
+/* ── SAVE BILL ── */
 function saveBill(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
   if(!room){toast('Room not found','err');return;}
@@ -913,9 +1329,8 @@ function saveBill(rid){
   renderDashboard();updateAlertBadge();
 }
 
-/* ─── RESET BILL — FULLY FIXED ─── */
+/* ── RESET BILL ── */
 function doResetBill(rid){
-  // getRoomBill uses String(rid) internally — safe regardless of type
   const bill=getRoomBill(curY,curM,rid);
   if(!bill){toast('No bill found for this room','err');return;}
   showConfirm(
@@ -924,9 +1339,7 @@ function doResetBill(rid){
     'Reset',
     function(){
       const rooms=getRooms();
-      // Revert lastMeterReading to what it was before this bill was saved
       saveRooms(rooms.map(r=>r.id===rid?{...r,lastMeterReading:bill.prevReading}:r));
-      // Delete bill using consistent String key
       deleteRoomBill(curY,curM,rid);
       toast('Bill reset successfully','info');
       openPanels.add(rid);
@@ -935,7 +1348,7 @@ function doResetBill(rid){
   );
 }
 
-/* ─── TOGGLE PAID ─── */
+/* ── TOGGLE PAID ── */
 function togglePaid(rid){
   const bill=getRoomBill(curY,curM,rid);
   if(!bill){toast('No bill found','err');return;}
@@ -949,7 +1362,7 @@ function togglePaid(rid){
   renderDashboard();updateAlertBadge();
 }
 
-/* ─── WHATSAPP ─── */
+/* ── WHATSAPP ── */
 function sendWABill(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
   const bill=getRoomBill(curY,curM,rid);
@@ -959,7 +1372,6 @@ function sendWABill(rid){
   const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n━━━━━━━━━━━━━━\n📋 *Rent Bill – '+MONTHS[curM]+' '+curY+'*\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\n━━━━━━━━━━━━━━\n⚡ Electricity\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━\n💰 *Total: ₹'+fmt(bill.total)+'*\n📅 Due: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n━━━━━━━━━━━━━━\nKindly pay by due date. 🙏';
   window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
 }
-
 function sendWAReminder(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
   if(!room||!room.tenantPhone){toast('No phone number','err');return;}
@@ -969,7 +1381,7 @@ function sendWAReminder(rid){
   window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
 }
 
-/* ─── RECEIPT ─── */
+/* ── RECEIPT ── */
 function openReceipt(rid){
   const rooms=getRooms(),settings=getSettings(),room=rooms.find(r=>r.id===rid);
   const bill=getRoomBill(curY,curM,rid);
@@ -979,7 +1391,6 @@ function openReceipt(rid){
   document.getElementById('rcptBody').innerHTML=buildReceipt(_rcptData);
   openOv('ovReceipt');
 }
-
 function buildReceipt(d){
   const {room,bill,settings,month,year}=d;
   const er=parseFloat(settings.elecRate)||8,rcNo=bill.receiptNo||'DRAFT';
@@ -1012,7 +1423,6 @@ function buildReceipt(d){
     </div>
   </div>`;
 }
-
 function sendReceiptWA(){
   if(!_rcptData){toast('No receipt loaded','err');return;}
   const {room,bill,settings,month,year}=_rcptData;
@@ -1022,7 +1432,7 @@ function sendReceiptWA(){
   window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
 }
 
-/* ─── TENANT MODAL ─── */
+/* ── TENANT MODAL ── */
 function openTM(rid){
   _tmRoom=rid;
   const room=getRooms().find(r=>r.id===rid);
@@ -1050,7 +1460,7 @@ function confirmTenant(){
   closeOv('ovTenant');toast('Tenant saved ✓','ok');renderDashboard();updateAlertBadge();
 }
 
-/* ─── VACATE MODAL ─── */
+/* ── VACATE MODAL ── */
 function openVM(rid){
   _vmRoom=rid;
   document.getElementById('vmDate').value=new Date().toISOString().slice(0,10);
@@ -1067,13 +1477,13 @@ function confirmVacate(){
   closeOv('ovVacate');toast('Room vacated','info');openPanels.delete(_vmRoom);renderDashboard();updateAlertBadge();
 }
 
-/* ─── ADD NOTE ─── */
+/* ── ADD NOTE ── */
 function doAddNote(rid){
   const n=prompt('Add note for Room '+rid+':');
   if(n&&n.trim()){addNote(rid,n.trim());toast('Note added ✓','ok');renderDashboard();}
 }
 
-/* ─── ALERTS ─── */
+/* ── ALERTS ── */
 function updateAlertBadge(){
   const rooms=getRooms();
   const urgC=rooms.filter(r=>{
@@ -1083,7 +1493,6 @@ function updateAlertBadge(){
   const badge=document.getElementById('alertBadge');
   if(badge)badge.style.display=urgC?'':'none';
 }
-
 function renderAlerts(){
   const rooms=getRooms();
   const items=[];
@@ -1093,11 +1502,11 @@ function renderAlerts(){
     else if(s==='o'&&isDueSoon(r))items.push({type:'wrn',room:r,bill:b,msg:'Due in '+daysLeft(r)+' day(s) – '+r.due+sfx(r.due)+' '+MONTHS[curM]});
     if(s==='n')items.push({type:'inf',room:r,bill:null,msg:'No meter reading entered yet for '+MONTHS[curM]});
   });
-  // update badge
   const urgC=items.filter(i=>i.type==='urg'||i.type==='wrn').length;
   const badge=document.getElementById('alertBadge');
   if(badge)badge.style.display=urgC?'':'none';
-
+  const subEl=document.getElementById('alertSubtitle');
+  if(subEl)subEl.textContent=items.length?`${items.length} item${items.length>1?'s':''} need attention`:'All clear for '+MONTHS[curM];
   const el=document.getElementById('alertsWrap');
   if(!el)return;
   if(!items.length){
@@ -1117,7 +1526,6 @@ function renderAlerts(){
     </div>
   </div>`).join('');
 }
-
 function jumpToRoom(rid){
   showTab('home');
   openPanels.add(rid);
@@ -1128,7 +1536,7 @@ function jumpToRoom(rid){
   },120);
 }
 
-/* ─── HISTORY ─── */
+/* ── HISTORY ── */
 function renderHistory(){
   const rooms=getRooms();
   if(histRoom===null)histRoom=rooms[0]?rooms[0].id:1;
@@ -1144,7 +1552,7 @@ function renderHistTable(){
     const b=getRoomBill(d.getFullYear(),d.getMonth(),histRoom);
     if(b)rows.push({lbl:MONTHS[d.getMonth()].slice(0,3)+' '+d.getFullYear(),b});
   }
-  if(!rows.length){el.innerHTML='<div class="empty"><div class="empty-ico">📭</div><div class="empty-txt">No history yet for this room</div></div>';return;}
+  if(!rows.length){el.innerHTML='<div class="empty"><div class="empty-ico">📭</div><div class="empty-txt">No history yet for this room.</div></div>';return;}
   const totCol=rows.reduce((a,r)=>a+(r.b.paid?r.b.total:0),0);
   el.innerHTML=`<div style="font-size:.7rem;color:var(--muted);margin-bottom:7px;padding-left:1px;">${rows.length} months · Collected: <span style="color:var(--g);font-weight:700;">₹${fmt(totCol)}</span></div>
   <div class="htable">
@@ -1160,7 +1568,7 @@ function renderHistTable(){
   </div>`;
 }
 
-/* ─── YEARLY ─── */
+/* ── YEARLY ── */
 function renderYearly(){
   document.getElementById('yrLbl').textContent=selY;
   const rooms=getRooms();let grand=0,cardsH='';
@@ -1190,13 +1598,13 @@ function renderYearly(){
   const activeRooms=rooms.filter(r=>{for(let m=0;m<12;m++)if(getRoomBill(selY,m,r.id))return true;return false;}).length;
   document.getElementById('yrReport').innerHTML=`<div class="ytcard">
     <div><div class="ytl">Total Income ${selY}</div><div class="ytv">₹${fmt(grand)}</div></div>
-    <div style="text-align:right;font-size:.68rem;color:var(--muted);">${activeRooms} rooms</div>
+    <div style="text-align:right;font-size:.68rem;color:var(--muted);">${activeRooms} active rooms</div>
   </div>${cardsH}`;
 }
 function togYr(k){if(yrExpanded.has(k))yrExpanded.delete(k);else yrExpanded.add(k);renderYearly();}
 function changeYear(d){selY+=d;renderYearly();}
 
-/* ─── SETTINGS ─── */
+/* ── SETTINGS ── */
 function renderSettings(){
   const s=getSettings();
   document.getElementById('sProp').value=s.propertyName||'';
@@ -1221,6 +1629,21 @@ function renderSettings(){
   document.getElementById('roomCfg').innerHTML=h;
   const ls=lsRaw('rb_lsync');
   const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
+
+  // User profile card
+  if(_authUser){
+    const u=_authUser;
+    document.getElementById('userProfileCard').innerHTML=`
+      <div class="scard-hd">👤 Signed In As</div>
+      <div class="user-info-card">
+        ${u.picture?`<img src="${u.picture}" class="uic-avatar" referrerpolicy="no-referrer"/>`:`<div style="width:44px;height:44px;border-radius:50%;background:var(--ag);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--accent);">${(u.name||'U')[0]}</div>`}
+        <div>
+          <div class="uic-name">${escH(u.name||'User')}</div>
+          <div class="uic-email">${escH(u.email||'')}</div>
+        </div>
+        <button class="btn btn-r" style="width:auto;padding:5px 10px;margin:0;font-size:.66rem;margin-left:auto;" onclick="doSignOut()">Sign Out</button>
+      </div>`;
+  }
 }
 function saveRoomRent(rid,val){
   const v=parseInt(val);
@@ -1242,7 +1665,7 @@ function addRoom(){
   toast('Room added ✓','ok');renderSettings();
 }
 
-/* ─── EXPORT / IMPORT ─── */
+/* ── EXPORT / IMPORT ── */
 function exportData(){
   const blob=new Blob([JSON.stringify(_buildDump(),null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
@@ -1263,17 +1686,20 @@ function importData(input){
   reader.readAsText(file);
 }
 
-/* ─── NAV ─── */
+/* ── NAV ── */
 function showTab(tab){
   ['home','alerts','history','yearly','settings'].forEach(function(t){
-    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
-    const b=document.getElementById('bn-'+t);if(b)b.classList.toggle('on',t===tab);
+    const tabEl=document.getElementById('tab-'+t);
+    if(tabEl)tabEl.style.display=t===tab?'block':'none';
+    const b=document.getElementById('bn-'+t);
+    if(b)b.classList.toggle('on',t===tab);
   });
-  document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.toggle('on',el.dataset.tab===tab);});
   if(tab==='history')renderHistory();
   if(tab==='yearly')renderYearly();
   if(tab==='settings')renderSettings();
   if(tab==='alerts')renderAlerts();
+  // Scroll to top on tab switch
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function changeMonth(d){
   let m=curM+d,y=curY;
@@ -1285,11 +1711,11 @@ function changeMonth(d){
 function updML(){document.getElementById('mLabel').textContent=MONTHS[curM].slice(0,3)+' '+curY;}
 function togglePanel(id){if(openPanels.has(id))openPanels.delete(id);else openPanels.add(id);renderDashboard();}
 
-/* ─── MODALS ─── */
+/* ── MODALS ── */
 function openOv(id){document.getElementById(id).classList.add('open');}
 function closeOv(id){document.getElementById(id).classList.remove('open');}
 
-/* ─── CUSTOM CONFIRM ─── */
+/* ── CONFIRM ── */
 function showConfirm(tit,msg,okLabel,cb,variant){
   variant=variant||'btn-r';
   document.getElementById('cfmTit').textContent=tit;
@@ -1305,7 +1731,7 @@ function cfmResolve(yes){
   _cfmCb=null;
 }
 
-/* ─── UTILS ─── */
+/* ── UTILS ── */
 function fmt(n){return Math.round(n||0).toLocaleString('en-IN');}
 function sfx(d){if(d>=11&&d<=13)return 'th';return['th','st','nd','rd','th','th','th','th','th','th'][d%10];}
 function fmtD(iso){
@@ -1327,7 +1753,9 @@ function toast(msg,type){
   window._tt=setTimeout(function(){el.classList.remove('show');},2800);
 }
 
-/* ─── INIT ─── */
+/* ════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════ */
 function init(){
   const now=new Date();
   curM=now.getMonth();curY=now.getFullYear();selY=now.getFullYear();
@@ -1340,9 +1768,18 @@ function init(){
   _syncUI('','Not connected');
   const ls=lsRaw('rb_lsync');
   const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
-  if(s.googleClientId)loadGScripts(s.googleClientId);
+
+  // Restore Drive token from storage and connect
+  _driveInit();
+
+  // Background auto-sync every 5 minutes
+  setInterval(function(){
+    if(lsRaw('rb_gtok')&&!_syncLock){forceSyncNow();}
+  },5*60*1000);
 }
-init();
+
+// Start with auth check
+initAuth();
 </script>
 </body>
 </html>
