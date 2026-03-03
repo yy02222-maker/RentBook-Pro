@@ -321,7 +321,7 @@ select.sinput option{background:var(--s2);}
 <!-- SYNC BAR -->
 <div class="sbar">
   <div class="sleft"><div class="sdot" id="sdot"></div><span id="stxt">Not connected</span></div>
-  <button class="sbtn" id="sact" onclick="handleSyncBtn()">Sign in with Google</button>
+  <button class="sbtn" id="sact" onclick="handleSyncBtn()">Connect Drive</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -518,7 +518,6 @@ function lsRaw(k,v){
 /* ================================================================
    GOOGLE DRIVE ENGINE
    ================================================================ */
-  const HARDCODED_CLIENT_ID = "666638327243-6ter1gind8mmec287v5fdp967p8786jo.apps.googleusercontent.com";
 const GD={FILE:'rentbook-pro-data.json',SCOPE:'https://www.googleapis.com/auth/drive.appdata'};
 let _gisOk=false,_gapiOk=false,_tc=null,_gTok=null,_gFid=null,_syncTimer=null;
 
@@ -564,21 +563,10 @@ function _applyConnected(){
   _renderDriveW(true);
 }
 function handleSyncBtn(){
-  if(!_gTok){
-    if(!_gisOk){
-      loadGScripts(HARDCODED_CLIENT_ID);
-      setTimeout(handleSyncBtn,1500);
-      return;
-    }
-    _tc.requestAccessToken({prompt:'consent'});
-  } else {
-    forceSyncNow();
-  }
-}
   const s=getSettings();
   if(!s.googleClientId){_promptCID();return;}
   if(!_gTok){
-    if(!_gisOk){loadGScripts(HARDCODED_CLIENT_ID);setTimeout(handleSyncBtn,1600);return;}
+    if(!_gisOk){loadGScripts(s.googleClientId);setTimeout(handleSyncBtn,1600);return;}
     _tc.requestAccessToken({prompt:'consent'});
   } else {forceSyncNow();}
 }
@@ -1352,7 +1340,7 @@ function init(){
   _syncUI('','Not connected');
   const ls=lsRaw('rb_lsync');
   const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
-  if(s.googleClientId)loadGScripts(HARDCODED_CLIENT_ID);
+  if(s.googleClientId)loadGScripts(s.googleClientId);
 }
 init();
 </script>
