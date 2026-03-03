@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="RentBook"/>
+<meta name="theme-color" content="#070d1a"/>
+<title>RentBook Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#070d1a;--bg2:#0b1220;--bg3:#0e1828;
+  --s1:#101b2c;--s2:#152030;--s3:#1a2838;
+  --b1:#1b2d42;--b2:#223350;--b3:#28405e;
+  --accent:#f5a623;--a2:#fbbf24;--ag:rgba(245,166,35,.14);
+  --txt:#eaeff7;--txt2:#a6b8ce;--muted:#4a6278;
+  --g:#0de68a;--gb:rgba(13,230,138,.1);--gbr:rgba(13,230,138,.22);
+  --o:#ff8c3a;--ob:rgba(255,140,58,.1);--obr:rgba(255,140,58,.22);
+  --r:#ff3f5e;--rb:rgba(255,63,94,.1);--rbr:rgba(255,63,94,.22);
+  --bl:#44a6ff;--blb:rgba(68,166,255,.1);--blbr:rgba(68,166,255,.22);
+  --pu:#a78bfa;--pub:rgba(167,139,250,.1);--pubr:rgba(167,139,250,.22);
+  --wa:#128C7E;
+  --rad:13px;--rads:9px;--radx:22px;
+  --sh:0 8px 32px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{height:100%;overscroll-behavior:none;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);padding-bottom:calc(160px + env(safe-area-inset-bottom,0px));overflow-x:hidden;min-height:100%;}
+
+/* TOPBAR */
+.topbar{background:rgba(7,13,26,.97);border-bottom:1px solid var(--b1);padding:12px 15px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);}
+.brand{display:flex;align-items:center;gap:9px;}
+.brand-ico{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 0 14px var(--ag);flex-shrink:0;}
+.brand-name{font-size:.95rem;font-weight:800;letter-spacing:-.02em;}
+.brand-sub{font-size:.62rem;color:var(--muted);margin-top:1px;}
+.mnav{display:flex;align-items:center;gap:6px;}
+.mnbtn{width:31px;height:31px;border-radius:50%;background:var(--s2);border:1px solid var(--b2);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s;flex-shrink:0;}
+.mnbtn:active{background:var(--accent);color:#000;border-color:var(--accent);}
+.mnlbl{font-size:.73rem;font-weight:700;color:var(--accent);min-width:80px;text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;}
+
+/* TABS */
+.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--b1);position:sticky;top:58px;z-index:190;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{flex:1;min-width:56px;padding:10px 3px 8px;font-size:.65rem;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
+.tab-btn.on{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* SYNC BAR */
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:6px 15px;background:var(--s2);border-bottom:1px solid var(--b1);font-size:.66rem;}
+.sleft{display:flex;align-items:center;gap:6px;color:var(--muted);}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.sdot.on{background:var(--g);box-shadow:0 0 6px rgba(13,230,138,.5);}
+.sdot.spin{background:var(--accent);animation:blink 1s infinite;}
+.sdot.err{background:var(--r);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.sbtn{font-size:.67rem;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;padding:1px 0;}
+
+/* SUMMARY */
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 5px;}
+.sc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);padding:12px 12px 10px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;top:-8px;right:-8px;width:52px;height:52px;border-radius:50%;opacity:.06;}
+.sc.g::after{background:var(--g)}.sc.o::after{background:var(--o)}.sc.r::after{background:var(--r)}.sc.b::after{background:var(--bl)}
+.sc-ico{font-size:1.1rem;margin-bottom:4px;}
+.sc-lbl{font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:2px;}
+.sc-val{font-size:1.15rem;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em;}
+.sc-val.g{color:var(--g)}.sc-val.o{color:var(--o)}.sc-val.r{color:var(--r)}.sc-val.b{color:var(--bl)}
+.sc-sub{font-size:.58rem;color:var(--muted);margin-top:2px;}
+
+/* CHIPS */
+.chips{display:flex;gap:6px;padding:5px 12px 10px;overflow-x:auto;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{display:flex;align-items:center;gap:5px;background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:5px 10px;font-size:.66rem;font-weight:600;white-space:nowrap;flex-shrink:0;color:var(--txt2);}
+.cdot{width:6px;height:6px;border-radius:50%;}
+
+/* FLOOR */
+.floor-sec{padding:3px 12px 16px;}
+.floor-hd{display:flex;align-items:center;gap:8px;padding:8px 10px 6px;margin-bottom:6px;border-bottom:1px solid var(--b1);}
+.floor-tag{font-size:.57rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:var(--ag);color:var(--accent);border:1px solid rgba(245,166,35,.18);}
+.floor-info{font-size:.63rem;color:var(--muted);margin-left:auto;}
+
+/* ROOM CARD */
+.rcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);margin-bottom:8px;overflow:hidden;transition:border-color .2s;}
+.rcard.lp{border-left:3px solid var(--g)}.rcard.lo{border-left:3px solid var(--o)}.rcard.lr{border-left:3px solid var(--r)}.rcard.lv{border-left:3px solid var(--bl)}.rcard.ln{border-left:3px solid var(--muted)}
+.rhdr{padding:11px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.rlft{display:flex;align-items:center;gap:9px;}
+.ravt{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+.ravt.p{background:var(--gb);color:var(--g);border:1px solid var(--gbr)}
+.ravt.o{background:var(--ob);color:var(--o);border:1px solid var(--obr)}
+.ravt.r{background:var(--rb);color:var(--r);border:1px solid var(--rbr)}
+.ravt.v{background:var(--blb);color:var(--bl);border:1px solid var(--blbr)}
+.ravt.n{background:var(--s3);color:var(--muted);border:1px solid var(--b2)}
+.rname{font-weight:700;font-size:.86rem;}
+.rdet{font-size:.63rem;color:var(--muted);margin-top:2px;}
+.rrgt{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.pill{font-size:.57rem;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:20px;text-transform:uppercase;}
+.pill.p{background:var(--gb);color:var(--g);border:1px solid var(--gbr)}
+.pill.o{background:var(--ob);color:var(--o);border:1px solid var(--obr)}
+.pill.r{background:var(--rb);color:var(--r);border:1px solid var(--rbr);animation:rp 2.5s infinite}
+.pill.v{background:var(--blb);color:var(--bl);border:1px solid var(--blbr)}
+.pill.n{background:var(--s3);color:var(--muted);border:1px solid var(--b2)}
+@keyframes rp{0%,100%{box-shadow:none}50%{box-shadow:0 0 8px rgba(255,63,94,.4)}}
+.ramt{font-size:.86rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.rarr{font-size:.63rem;color:var(--muted);transition:transform .22s;}
+.rarr.up{transform:rotate(180deg);}
+.duewarn{display:inline-flex;align-items:center;font-size:.56rem;font-weight:700;color:var(--o);background:var(--ob);padding:1px 6px;border-radius:8px;margin-left:4px;}
+
+/* PANEL */
+.rpanel{border-top:1px solid var(--b1);display:none;}
+.rpanel.open{display:block;}
+.pi{padding:12px 12px 16px;}
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px;}
+.ic{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rads);padding:8px 10px;}
+.icl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:1px;}
+.icv{font-size:.82rem;font-weight:600;word-break:break-word;}
+.stt{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:9px 0 8px;display:flex;align-items:center;gap:6px;}
+.stt::after{content:'';flex:1;height:1px;background:var(--b1);}
+
+/* INPUTS */
+.fg{display:flex;flex-direction:column;gap:3px;}
+.flbl{font-size:.63rem;color:var(--muted);font-weight:700;letter-spacing:.04em;}
+.fin{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--rads);color:var(--txt);font-size:.86rem;font-family:'Sora',sans-serif;padding:10px 12px;width:100%;transition:border-color .2s;-webkit-appearance:none;}
+.fin:focus{outline:none;border-color:var(--accent);}
+.fin.bad{border-color:var(--r);}
+.ferr{font-size:.6rem;color:var(--r);margin-top:2px;min-height:14px;}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;}
+.ftxt{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--rads);color:var(--txt);font-family:'Sora',sans-serif;font-size:.8rem;padding:9px 12px;width:100%;resize:none;min-height:54px;transition:border-color .2s;}
+.ftxt:focus{outline:none;border-color:var(--accent);}
+
+/* BILL PREVIEW */
+.bprev{background:var(--s2);border:1px solid var(--b2);border-radius:var(--rads);padding:10px 12px;margin:8px 0;}
+.brow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.brow+.brow{border-top:1px dashed var(--b1);}
+.brl{font-size:.71rem;color:var(--txt2);}
+.brv{font-size:.78rem;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.brow.tot .brl{font-weight:700;color:var(--txt);font-size:.76rem;}
+.brow.tot .brv{color:var(--accent);font-size:.95rem;font-weight:800;}
+
+/* TOGGLE */
+.togrow{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--b1);margin-top:3px;}
+.toglbl{font-size:.8rem;font-weight:600;}
+.toglbl small{font-size:.66rem;font-weight:400;color:var(--muted);margin-left:4px;}
+.tog{position:relative;width:46px;height:25px;flex-shrink:0;}
+.tog input{opacity:0;position:absolute;inset:0;width:0;height:0;}
+.tsl{position:absolute;inset:0;background:var(--s3);border-radius:30px;cursor:pointer;transition:background .2s;border:1px solid var(--b2);}
+.tsl::after{content:'';position:absolute;left:3px;top:3px;width:17px;height:17px;background:var(--muted);border-radius:50%;transition:.22s;}
+.tog input:checked+.tsl{background:var(--gb);border-color:var(--gbr);}
+.tog input:checked+.tsl::after{transform:translateX(21px);background:var(--g);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:none;border-radius:var(--rads);padding:11px 12px;font-family:'Sora',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;width:100%;letter-spacing:.01em;}
+.btn:active{transform:scale(.96);opacity:.9;}
+.btn-acc{background:var(--accent);color:#000;}
+.btn-g{background:var(--g);color:#000;}
+.btn-wa{background:var(--wa);color:#fff;}
+.btn-gh{background:var(--s2);color:var(--txt2);border:1px solid var(--b2);}
+.btn-r{background:var(--rb);color:var(--r);border:1px solid var(--rbr);}
+.btn-pu{background:var(--pub);color:var(--pu);border:1px solid var(--pubr);}
+.btn-bl{background:var(--blb);color:var(--bl);border:1px solid var(--blbr);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:6px;}
+.g2 .btn,.g3 .btn{margin-top:0;font-size:.72rem;padding:9px 6px;}
+
+/* OVERLAYS */
+.ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(64px + env(safe-area-inset-bottom,0px));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.ov.open{display:flex;}
+/* FIX: bottom padding clears the 80px nav bar + device safe area so buttons never get cut */
+.modal{background:var(--s1);border:1px solid var(--b2);border-top-left-radius:18px;border-top-right-radius:18px;padding:18px 16px 26px;width:100%;max-width:520px;max-height:78vh;overflow-y:auto;animation:slideup .22s ease;}
+@keyframes slideup{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.drag{width:32px;height:4px;background:var(--b3);border-radius:2px;margin:0 auto 14px;}
+.mtit{font-size:.95rem;font-weight:800;margin-bottom:2px;}
+.msub{font-size:.7rem;color:var(--muted);margin-bottom:14px;}
+.mact{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
+.mact .btn{margin-top:0;}
+
+/* RECEIPT */
+.receipt{background:#fff;color:#111;border-radius:var(--rads);overflow:hidden;margin:8px 0;}
+.rhead{background:linear-gradient(135deg,#0d1e3a 0%,#163265 100%);color:#fff;padding:16px 15px 12px;text-align:center;}
+.rhprop{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;opacity:.65;margin-bottom:3px;}
+.rhtit{font-size:1.1rem;font-weight:800;margin-bottom:1px;}
+.rhsub{font-size:.65rem;opacity:.6;}
+.rbody{padding:12px 15px;}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed #e5e7eb;}
+.rr:last-child{border-bottom:none;}
+.rrl{font-size:.7rem;color:#555;}
+.rrv{font-size:.75rem;font-weight:600;color:#111;font-family:'JetBrains Mono',monospace;}
+.rtot{background:#f9fafb;border-top:2px solid #e5e7eb;padding:11px 15px;display:flex;justify-content:space-between;align-items:center;}
+.rtl{font-size:.76rem;font-weight:700;color:#374151;}
+.rtv{font-size:1.05rem;font-weight:800;color:#059669;font-family:'JetBrains Mono',monospace;}
+.rftr{background:#f3f4f6;padding:9px 15px;text-align:center;font-size:.6rem;color:#9ca3af;line-height:1.6;}
+.stamp{display:inline-block;border:2px solid #059669;color:#059669;border-radius:4px;padding:2px 10px;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;transform:rotate(-7deg);margin:6px 0;}
+.stamp.unpaid{border-color:#dc2626;color:#dc2626;}
+
+/* NOTICES */
+.nwrap{padding:12px 12px 16px;}
+.nc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);padding:12px;margin-bottom:8px;}
+.nc.urg{border-left:3px solid var(--r);}
+.nc.wrn{border-left:3px solid var(--o);}
+.nc.inf{border-left:3px solid var(--bl);}
+.nchd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.nctit{font-size:.82rem;font-weight:700;}
+.ncbdg{font-size:.56rem;font-weight:800;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;}
+.ncbdg.urg{background:var(--rb);color:var(--r);border:1px solid var(--rbr);}
+.ncbdg.wrn{background:var(--ob);color:var(--o);border:1px solid var(--obr);}
+.ncbdg.inf{background:var(--blb);color:var(--bl);border:1px solid var(--blbr);}
+.ncbody{font-size:.73rem;color:var(--txt2);line-height:1.5;}
+.ncact{display:flex;gap:6px;margin-top:9px;}
+.ncact .btn{margin-top:0;font-size:.7rem;padding:7px 10px;flex:1;}
+
+/* HISTORY */
+.rpkr{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 12px 7px;}
+.rpkr::-webkit-scrollbar{display:none;}
+.rpill{padding:6px 12px;border-radius:20px;font-size:.7rem;font-weight:700;background:var(--s1);border:1px solid var(--b1);color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:.15s;}
+.rpill.on{background:var(--accent);color:#000;border-color:var(--accent);}
+.hwrap{padding:0 12px 14px;}
+.htable{border-radius:var(--rad);overflow:hidden;border:1px solid var(--b1);}
+.hrow{display:grid;grid-template-columns:1.8fr 1.2fr .8fr .9fr .7fr .7fr;font-size:.64rem;padding:8px 10px;border-bottom:1px solid var(--b1);align-items:center;gap:2px;}
+.hrow:last-child{border-bottom:none;}
+.hrow.hh{background:var(--s2);color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
+.hrow.hd{background:var(--s1);}
+.hrow.hd:nth-child(even){background:var(--bg2);}
+
+/* YEARLY */
+.ywrap{padding:12px 12px 16px;}
+.ybar{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.ylbl{font-size:.9rem;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace;}
+.ytcard{background:linear-gradient(135deg,var(--s2),var(--s3));border:1px solid var(--b2);border-radius:var(--rad);padding:14px;margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;}
+.ytl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:3px;}
+.ytv{font-size:1.3rem;font-weight:800;color:var(--g);font-family:'JetBrains Mono',monospace;}
+.ycard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);overflow:hidden;margin-bottom:8px;}
+.ych{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--s2);cursor:pointer;}
+.ychn{font-size:.8rem;font-weight:700;}
+.ycht{font-size:.82rem;font-weight:700;color:var(--g);font-family:'JetBrains Mono',monospace;}
+.ymon{display:none;}
+.ymon.open{display:block;}
+.ymrow{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;font-size:.73rem;border-bottom:1px solid var(--b1);}
+.ymrow:last-child{border-bottom:none;}
+.ymla{color:var(--txt2);}
+.ymtot{font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+/* SETTINGS */
+.sw{padding:12px;}
+.scard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad);margin-bottom:10px;overflow:hidden;}
+.scard-hd{padding:11px 14px;font-weight:800;font-size:.78rem;color:var(--accent);border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:6px;letter-spacing:.02em;}
+.srow{padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--b1);}
+.srow:last-child{border-bottom:none;}
+.srl{font-size:.8rem;font-weight:600;}
+.srs{font-size:.63rem;color:var(--muted);margin-top:2px;}
+.sinput{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--rads);color:var(--txt);font-size:.8rem;font-family:'Sora',sans-serif;padding:7px 10px;-webkit-appearance:none;}
+.sinput:focus{outline:none;border-color:var(--accent);}
+select.sinput option{background:var(--s2);}
+
+/* BOTTOM NAV - FIX: .bni is the correct class, removed .bnav-item */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,17,30,.97);border-top:1px solid var(--b1);display:flex;z-index:300;padding-bottom:env(safe-area-inset-bottom,0);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px 10px;cursor:pointer;border:none;background:none;color:var(--muted);gap:2px;transition:color .2s;position:relative;}
+.bni.on{color:var(--accent);}
+.bni-ico{font-size:1.1rem;line-height:1;}
+.bni-lbl{font-size:.52rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+.badge{position:absolute;top:5px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--r);border:1.5px solid var(--bg);}
+
+/* TOAST */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--s1);border:1px solid var(--b2);border-radius:var(--radx);padding:8px 16px;font-size:.75rem;font-weight:700;z-index:500;opacity:0;transition:.22s;pointer-events:none;white-space:nowrap;box-shadow:var(--sh);display:flex;align-items:center;gap:6px;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(--gbr);color:var(--g);}
+.toast.err{border-color:var(--rbr);color:var(--r);}
+.toast.info{border-color:var(--blbr);color:var(--bl);}
+
+/* CONFIRM MODAL */
+.cfm-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.cfm-ov.open{display:flex;}
+.cfm-modal{background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:22px 20px;width:88%;max-width:320px;animation:zoomin .18s ease;}
+@keyframes zoomin{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+.cfm-ico{font-size:2rem;text-align:center;margin-bottom:8px;}
+.cfm-tit{font-size:.92rem;font-weight:800;text-align:center;margin-bottom:5px;}
+.cfm-msg{font-size:.74rem;color:var(--txt2);text-align:center;line-height:1.6;margin-bottom:18px;white-space:pre-line;}
+.cfm-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* DRIVE PROMO */
+.gpromo{background:linear-gradient(135deg,rgba(68,166,255,.08),rgba(13,230,138,.05));border:1px solid rgba(68,166,255,.18);border-radius:var(--rad);padding:11px;margin:10px 12px 3px;display:flex;align-items:flex-start;gap:9px;}
+.gp-ico{font-size:1.25rem;flex-shrink:0;}
+.gp-tit{font-size:.8rem;font-weight:700;margin-bottom:2px;}
+.gp-txt{font-size:.7rem;color:var(--txt2);line-height:1.5;}
+
+/* NOTE */
+.note-card{background:var(--s2);border-radius:var(--rads);padding:6px 10px;margin-bottom:5px;font-size:.71rem;color:var(--txt2);border-left:2px solid var(--b3);}
+.note-date{font-size:.58rem;color:var(--muted);margin-bottom:2px;}
+
+.empty{text-align:center;padding:40px 18px;}
+.empty-ico{font-size:2rem;margin-bottom:8px;}
+.empty-txt{color:var(--muted);font-size:.8rem;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-ico">🏠</div>
+    <div>
+      <div class="brand-name">RentBook Pro</div>
+      <div class="brand-sub" id="brandProp">Loading…</div>
+    </div>
+  </div>
+  <div class="mnav">
+    <button class="mnbtn" onclick="changeMonth(-1)">‹</button>
+    <div class="mnlbl" id="mLabel">—</div>
+    <button class="mnbtn" onclick="changeMonth(1)">›</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn on" data-tab="home" onclick="showTab('home')">🏠 Home</button>
+  <button class="tab-btn" data-tab="alerts" onclick="showTab('alerts')">🔔 Alerts</button>
+  <button class="tab-btn" data-tab="history" onclick="showTab('history')">📋 History</button>
+  <button class="tab-btn" data-tab="yearly" onclick="showTab('yearly')">📊 Yearly</button>
+  <button class="tab-btn" data-tab="settings" onclick="showTab('settings')">⚙️ Settings</button>
+</div>
+
+<!-- SYNC BAR -->
+<div class="sbar">
+  <div class="sleft"><div class="sdot" id="sdot"></div><span id="stxt">Not connected</span></div>
+  <button class="sbtn" id="sact" onclick="handleSyncBtn()">Connect Drive</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- HOME TAB -->
+<div id="tab-home">
+  <div id="gPromo"></div>
+  <div class="sumgrid" id="sumGrid"></div>
+  <div class="chips" id="chips"></div>
+  <div id="rooms"></div>
+</div>
+
+<!-- ALERTS TAB -->
+<div id="tab-alerts" style="display:none;">
+  <div class="nwrap" id="alertsWrap"></div>
+</div>
+
+<!-- HISTORY TAB -->
+<div id="tab-history" style="display:none;">
+  <div class="rpkr" id="rpkr"></div>
+  <div class="hwrap" id="hwrap"></div>
+</div>
+
+<!-- YEARLY TAB -->
+<div id="tab-yearly" style="display:none;">
+  <div class="ywrap">
+    <div class="ybar">
+      <button class="mnbtn" onclick="changeYear(-1)">‹</button>
+      <div class="ylbl" id="yrLbl">—</div>
+      <button class="mnbtn" onclick="changeYear(1)">›</button>
+    </div>
+    <div id="yrReport"></div>
+  </div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div id="tab-settings" style="display:none;">
+  <div class="sw">
+    <div class="scard">
+      <div class="scard-hd">☁️ Google Drive Sync</div>
+      <div class="srow"><div><div class="srl">Cloud Backup</div><div class="srs">Auto-saves to your Google Drive</div></div><div id="driveWidget"></div></div>
+      <div class="srow" id="driveFileRow" style="display:none;"><div><div class="srl">Backup File</div><div class="srs">rentbook-pro-data.json</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="forceSyncNow()">Sync Now</button></div>
+      <div class="srow"><div class="srl">Last Synced</div><div class="srs" id="lastSync" style="font-size:.68rem;color:var(--muted);">Never</div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-hd">⚙️ General</div>
+      <div class="srow"><div class="srl">Property Name</div><input class="sinput" id="sProp" style="width:148px;" onchange="saveSetting('propertyName',this.value)"/></div>
+      <div class="srow"><div><div class="srl">Electricity Rate</div><div class="srs">₹ per unit</div></div><input class="sinput" type="number" min="1" id="sElec" style="width:70px;" onchange="saveSetting('elecRate',this.value)"/></div>
+      <div class="srow"><div class="srl">Landlord Name</div><input class="sinput" id="sLandlord" style="width:148px;" onchange="saveSetting('landlordName',this.value)"/></div>
+      <div class="srow"><div class="srl">Landlord Phone</div><input class="sinput" type="tel" id="sLandPhone" style="width:148px;" maxlength="10" onchange="saveSetting('landlordPhone',this.value)"/></div>
+    </div>
+    <div class="scard" id="roomCfg"></div>
+    <div class="scard">
+      <div class="scard-hd">➕ Add New Room</div>
+      <div style="padding:12px;">
+        <div class="frow2" style="margin-bottom:7px;">
+          <div class="fg"><label class="flbl">Floor</label><select class="fin" id="nrFloor"><option>Ground</option><option>First</option><option>Second</option><option>Third</option></select></div>
+          <div class="fg"><label class="flbl">Rent ₹</label><input class="fin" type="number" id="nrRent" placeholder="6000"/></div>
+        </div>
+        <div class="frow2">
+          <div class="fg"><label class="flbl">Due Date (1–28)</label><input class="fin" type="number" id="nrDue" placeholder="1" min="1" max="28"/></div>
+          <div class="fg" style="justify-content:flex-end;"><label class="flbl">&nbsp;</label><button class="btn btn-acc" style="margin:0;" onclick="addRoom()">Add</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-hd">💾 Backup</div>
+      <div class="srow"><div><div class="srl">Export Backup</div><div class="srs">Download as JSON</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="exportData()">Export</button></div>
+      <div class="srow"><div><div class="srl">Import Backup</div><div class="srs">Restore from JSON</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="document.getElementById('impFile').click()">Import</button><input type="file" id="impFile" accept=".json" style="display:none;" onchange="importData(this)"/></div>
+    </div>
+    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.62rem;line-height:1.8;">RentBook Pro v4.1 · Zero cost · Offline first · No server</div>
+  </div>
+</div>
+
+<!-- TENANT MODAL — FIX: inline event.target check, no global `event` dependency -->
+<div class="ov" id="ovTenant" onclick="if(event.target===this)closeOv('ovTenant')">
+  <div class="modal">
+    <div class="drag"></div>
+    <div class="mtit" id="tmTit">Add Tenant</div>
+    <div class="msub" id="tmSub">Room details</div>
+    <div class="fg" style="margin-bottom:8px;"><label class="flbl">Tenant Name *</label><input class="fin" id="tmName" placeholder="Full name"/></div>
+    <div class="fg" style="margin-bottom:8px;"><label class="flbl">WhatsApp Number (10 digits)</label><input class="fin" id="tmPhone" type="tel" maxlength="10" placeholder="9876543210" inputmode="numeric"/></div>
+    <div class="frow2">
+      <div class="fg"><label class="flbl">Move-in Date</label><input class="fin" type="date" id="tmDate"/></div>
+      <div class="fg"><label class="flbl">Security Deposit ₹</label><input class="fin" type="number" id="tmDeposit" placeholder="0"/></div>
+    </div>
+    <div class="mact">
+      <button class="btn btn-gh" onclick="closeOv('ovTenant')">Cancel</button>
+      <button class="btn btn-acc" onclick="confirmTenant()">Save Tenant</button>
+    </div>
+  </div>
+</div>
+
+<!-- VACATE MODAL -->
+<div class="ov" id="ovVacate" onclick="if(event.target===this)closeOv('ovVacate')">
+  <div class="modal">
+    <div class="drag"></div>
+    <div class="mtit">Vacate Room</div>
+    <div class="msub">Tenant removed. All billing history preserved.</div>
+    <div class="fg" style="margin-bottom:9px;"><label class="flbl">Move-out Date</label><input class="fin" type="date" id="vmDate"/></div>
+    <div class="fg"><label class="flbl">Notes (optional)</label><textarea class="ftxt" id="vmNotes" placeholder="Deposit returned, no pending dues…"></textarea></div>
+    <div class="mact">
+      <button class="btn btn-gh" onclick="closeOv('ovVacate')">Cancel</button>
+      <button class="btn btn-r" onclick="confirmVacate()">Confirm Vacate</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT MODAL -->
+<div class="ov" id="ovReceipt" onclick="if(event.target===this)closeOv('ovReceipt')">
+  <div class="modal">
+    <div class="drag"></div>
+    <div class="mtit">Payment Receipt</div>
+    <div class="msub" id="rcptSub">—</div>
+    <div id="rcptBody"></div>
+    <div class="mact">
+      <button class="btn btn-gh" onclick="closeOv('ovReceipt')">Close</button>
+      <button class="btn btn-wa" onclick="sendReceiptWA()">📲 WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- GOOGLE DRIVE SETUP MODAL -->
+<div class="ov" id="ovClientID" onclick="if(event.target===this)closeOv('ovClientID')">
+  <div class="modal">
+    <div class="drag"></div>
+    <div class="mtit">☁️ Connect Google Drive</div>
+    <div class="msub">Paste your OAuth 2.0 Client ID below</div>
+
+    <div style="background:var(--s2);border:1px solid var(--b2);border-radius:var(--rads);padding:11px 13px;margin-bottom:12px;font-size:.72rem;line-height:1.9;color:var(--txt2);">
+      <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">📋 How to get your Client ID (one-time setup)</div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">1</span> &nbsp;Go to <span style="color:var(--bl);font-weight:600;">console.cloud.google.com</span></div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">2</span> &nbsp;Click top dropdown → <b>New Project</b> → any name → <b>Create</b></div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">3</span> &nbsp;Left menu → <b>APIs &amp; Services → Library</b> → search <b>Google Drive API</b> → Enable</div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">4</span> &nbsp;Left menu → <b>Credentials → + Create Credentials → OAuth 2.0 Client ID</b></div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">5</span> &nbsp;If asked: Configure consent screen → External → add App name → Save &amp; Continue (skip rest)</div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">6</span> &nbsp;Application type → <b>Web application</b></div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">7</span> &nbsp;Authorized JavaScript origins → click <b>Add URI</b> → paste the URL from your browser address bar</div>
+      <div><span style="background:var(--s3);border-radius:4px;padding:0 5px;color:var(--txt);font-weight:700;">8</span> &nbsp;Click <b>Create</b> → a popup shows your keys → copy the <b>Client ID</b> (not the secret!)</div>
+      <div style="margin-top:6px;padding:6px 8px;background:rgba(245,166,35,.1);border-radius:6px;border:1px solid rgba(245,166,35,.2);color:var(--accent);font-size:.68rem;">
+        💡 Client ID looks like: <span style="font-family:monospace;">123456789-abc.apps.googleusercontent.com</span>
+      </div>
+    </div>
+
+    <div class="fg" style="margin-bottom:6px;">
+      <label class="flbl">Client ID *</label>
+      <input class="fin" id="cidInput" placeholder="xxxxxxxx.apps.googleusercontent.com" style="font-size:.74rem;" oninput="document.getElementById('cidErr').textContent=''"/>
+    </div>
+    <div id="cidErr" style="font-size:.66rem;color:var(--r);min-height:16px;margin-bottom:8px;line-height:1.4;"></div>
+
+    <div class="mact">
+      <button class="btn btn-gh" onclick="closeOv('ovClientID')">Cancel</button>
+      <button class="btn btn-acc" onclick="saveClientID()">Connect →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL — replaces browser confirm() which is blocked on some mobile WebViews -->
+<div class="cfm-ov" id="cfmOv">
+  <div class="cfm-modal">
+    <div class="cfm-ico" id="cfmIco">⚠️</div>
+    <div class="cfm-tit" id="cfmTit">Are you sure?</div>
+    <div class="cfm-msg" id="cfmMsg"></div>
+    <div class="cfm-btns">
+      <button class="btn btn-gh" onclick="cfmResolve(false)">Cancel</button>
+      <button class="btn btn-r" id="cfmOkBtn" onclick="cfmResolve(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="bni on" id="bn-home" onclick="showTab('home')"><span class="bni-ico">🏠</span><span class="bni-lbl">Home</span></button>
+  <button class="bni" id="bn-alerts" onclick="showTab('alerts')"><span class="bni-ico">🔔</span><span class="bni-lbl">Alerts</span><span class="badge" id="alertBadge" style="display:none;"></span></button>
+  <button class="bni" id="bn-history" onclick="showTab('history')"><span class="bni-ico">📋</span><span class="bni-lbl">History</span></button>
+  <button class="bni" id="bn-yearly" onclick="showTab('yearly')"><span class="bni-ico">📊</span><span class="bni-lbl">Yearly</span></button>
+  <button class="bni" id="bn-settings" onclick="showTab('settings')"><span class="bni-ico">⚙️</span><span class="bni-lbl">Settings</span></button>
+</div>
+
+<script>
+/* ================================================================
+   STORAGE HELPERS
+   - gd/sd  : JSON get/set for app data (bills, rooms, settings)
+   - lsRaw  : raw string get/set for tokens and timestamps
+   ================================================================ */
+function gd(k,fb){try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}}
+function sd(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{toast('Storage full!','err');}}
+// FIX: token is stored as plain string, never JSON-wrapped — avoids double-quote bug
+function lsRaw(k,v){
+  if(v===undefined)try{return localStorage.getItem(k);}catch{return null;}
+  try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){}
+}
+
+/* ================================================================
+   GOOGLE DRIVE ENGINE
+   ================================================================ */
+const GD={FILE:'rentbook-pro-data.json',SCOPE:'https://www.googleapis.com/auth/drive.appdata'};
+let _gisOk=false,_gapiOk=false,_tc=null,_gTok=null,_gFid=null,_syncTimer=null;
+
+function loadGScripts(cid){
+  if(!cid)return;
+  if(!document.getElementById('_gis')){
+    const s=document.createElement('script');s.id='_gis';s.src='https://accounts.google.com/gsi/client';
+    s.onload=()=>_initGIS(cid);document.head.appendChild(s);
+  }
+  if(!document.getElementById('_gapi')){
+    const s=document.createElement('script');s.id='_gapi';s.src='https://apis.google.com/js/api.js';
+    s.onload=()=>gapi.load('client',_initGAPI);document.head.appendChild(s);
+  }
+}
+function _initGIS(cid){
+  _tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GD.SCOPE,callback:_onTok});
+  _gisOk=true;_gCheck();
+}
+async function _initGAPI(){
+  await gapi.client.init({});
+  await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+  _gapiOk=true;_gCheck();
+}
+function _gCheck(){
+  if(!_gisOk||!_gapiOk)return;
+  // FIX: token stored as plain string via lsRaw — no JSON wrapping
+  const tok=lsRaw('rb_gtok');
+  if(tok){_gTok=tok;gapi.client.setToken({access_token:tok});_applyConnected();_schedSync();}
+  else{_syncUI('','Not connected to Drive');_renderDriveW(false);}
+}
+function _onTok(r){
+  if(r.error){toast('Auth failed','err');return;}
+  _gTok=r.access_token;
+  // FIX: save token as plain string, not JSON
+  lsRaw('rb_gtok',_gTok);
+  gapi.client.setToken({access_token:_gTok});
+  _applyConnected();toast('Google Drive connected ✓','ok');forceSyncNow();
+}
+function _applyConnected(){
+  _syncUI('on','Connected to Google Drive');
+  document.getElementById('sact').textContent='Sync Now';
+  document.getElementById('driveFileRow').style.display='';
+  _renderDriveW(true);
+}
+function handleSyncBtn(){
+  const s=getSettings();
+  if(!s.googleClientId){_promptCID();return;}
+  if(!_gTok){
+    if(!_gisOk){loadGScripts(s.googleClientId);setTimeout(handleSyncBtn,1600);return;}
+    _tc.requestAccessToken({prompt:'consent'});
+  } else {forceSyncNow();}
+}
+function _schedSync(){clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
+async function forceSyncNow(){
+  if(!_gTok)return;
+  _syncUI('spin','Syncing…');
+  try{
+    const json=JSON.stringify(_buildDump());
+    if(!_gFid)_gFid=await _findOrCreate();
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_gFid}?uploadType=media`,{
+      method:'PATCH',headers:{'Authorization':`Bearer ${_gTok}`,'Content-Type':'application/json'},body:json
+    });
+    const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    lsRaw('rb_lsync',ts);
+    const lsEl=document.getElementById('lastSync');if(lsEl)lsEl.textContent=ts;
+    _syncUI('on','Synced · '+ts);
+    document.getElementById('sact').textContent='Sync Now';
+  }catch(e){
+    if(String(e).includes('401')){lsRaw('rb_gtok',null);_gTok=null;_syncUI('err','Session expired – tap Reconnect');document.getElementById('sact').textContent='Reconnect';}
+    else _syncUI('err','Sync failed – tap to retry');
+  }
+}
+async function _findOrCreate(){
+  const r=await gapi.client.drive.files.list({spaces:'appDataFolder',q:`name='${GD.FILE}'`,fields:'files(id)'});
+  if(r.result.files&&r.result.files.length)return r.result.files[0].id;
+  const c=await gapi.client.drive.files.create({resource:{name:GD.FILE,parents:['appDataFolder']},fields:'id'});
+  return c.result.id;
+}
+function _syncUI(state,txt){
+  const d=document.getElementById('sdot');if(d)d.className='sdot'+(state?' '+state:'');
+  const s=document.getElementById('stxt');if(s)s.textContent=txt;
+  const ls=lsRaw('rb_lsync');
+  const el=document.getElementById('lastSync');if(el&&ls)el.textContent=ls;
+}
+function _renderDriveW(on){
+  const el=document.getElementById('driveWidget');if(!el)return;
+  el.innerHTML=on
+    ?`<div style="display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--g);font-weight:700;">● On <button onclick="disconnectDrive()" style="margin-left:6px;font-size:.62rem;background:none;border:none;color:var(--muted);cursor:pointer;text-decoration:underline;">Disconnect</button></div>`
+    :`<div style="font-size:.7rem;color:var(--muted);">○ Off</div>`;
+}
+function disconnectDrive(){
+  lsRaw('rb_gtok',null);_gTok=null;_gFid=null;
+  _renderDriveW(false);_syncUI('','Not connected');
+  document.getElementById('sact').textContent='Connect Drive';
+  document.getElementById('driveFileRow').style.display='none';
+  toast('Disconnected','info');
+}
+function _promptCID(){
+  const existing=getSettings().googleClientId||'';
+  setTimeout(()=>{const el=document.getElementById('cidInput');if(el){el.value=existing;document.getElementById('cidErr').textContent='';}},60);
+  openOv('ovClientID');
+}
+function saveClientID(){
+  const id=(document.getElementById('cidInput').value||'').trim();
+  const errEl=document.getElementById('cidErr');
+  if(!id){errEl.textContent='Please paste your Client ID.';return;}
+  if(!id.includes('.apps.googleusercontent.com')){
+    errEl.textContent='⚠️ Double-check: Client ID should end with .apps.googleusercontent.com';
+    // soft warning only — still allow save
+  } else {
+    errEl.textContent='';
+  }
+  const s=getSettings();s.googleClientId=id;sd('rb_settings',s);
+  closeOv('ovClientID');
+  loadGScripts(id);
+  toast('Client ID saved. Connecting…','info');
+  setTimeout(()=>{if(_tc)_tc.requestAccessToken({prompt:'consent'});else{loadGScripts(id);setTimeout(()=>{if(_tc)_tc.requestAccessToken({prompt:'consent'});},1500);}},1800);
+}
+function _buildDump(){
+  const d={};
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('rb_'))d[k]=localStorage.getItem(k);}
+  return d;
+}
+function _restoreDump(d){Object.entries(d).forEach(([k,v])=>{if(k.startsWith('rb_'))localStorage.setItem(k,v);});}
+
+/* ================================================================
+   APP DATA
+   ================================================================ */
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DROOMS=[
+  {id:1,floor:'Ground',rent:4500,due:24},{id:2,floor:'Ground',rent:9000,due:1},
+  {id:3,floor:'Ground',rent:9000,due:20},{id:4,floor:'First',rent:7000,due:24},
+  {id:5,floor:'First',rent:6500,due:2},{id:6,floor:'First',rent:6500,due:28},
+];
+const DSET={propertyName:'My Property',elecRate:8,landlordName:'',landlordPhone:'',googleClientId:''};
+
+let curM,curY,selY,openPanels=new Set(),histRoom=null,yrExpanded=new Set();
+let _tmRoom=null,_vmRoom=null,_rcptData=null,_cfmCb=null;
+
+/* ─── SETTINGS ─── */
+function getSettings(){return{...DSET,...gd('rb_settings',{})};}
+function saveSetting(k,v){
+  const s=getSettings();s[k]=v;sd('rb_settings',s);
+  if(k==='propertyName')document.getElementById('brandProp').textContent=v||'My Property';
+  toast('Saved ✓','ok');_schedSync();
+}
+
+/* ─── ROOMS ─── */
+function getRooms(){
+  let r=gd('rb_rooms',null);
+  if(!r){
+    r=DROOMS.map(x=>({...x,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''}));
+    sd('rb_rooms',r);
+  }
+  // FIX: always coerce id to Number to keep type consistent in memory
+  return r.map(x=>({lastMeterReading:0,tenantName:'',tenantPhone:'',deposit:0,moveInDate:'',...x,id:Number(x.id)}));
+}
+function saveRooms(r){sd('rb_rooms',r);_schedSync();}
+
+/* ─── BILLS — KEY IS ALWAYS String(id) to survive JSON round-trips ─── */
+function mKey(y,m){return`${y}-${String(m+1).padStart(2,'0')}`;}
+function getMonthBills(y,m){return gd(`rb_bill_${mKey(y,m)}`,{});}
+function saveMonthBills(y,m,d){sd(`rb_bill_${mKey(y,m)}`,d);_schedSync();}
+function getRoomBill(y,m,id){return getMonthBills(y,m)[String(id)]||null;}
+function saveRoomBill(y,m,id,rec){const b=getMonthBills(y,m);b[String(id)]=rec;saveMonthBills(y,m,b);}
+function deleteRoomBill(y,m,id){const b=getMonthBills(y,m);delete b[String(id)];saveMonthBills(y,m,b);}
+
+/* ─── TENANT LOG & NOTES ─── */
+function addTenantLog(id,e){const k=`rb_tlog_${id}`;const h=gd(k,[]);h.push(e);sd(k,h);}
+function getTenantLog(id){return gd(`rb_tlog_${id}`,[]);}
+function addNote(id,note){const k=`rb_notes_${id}`;const n=gd(k,[]);n.push({note,dt:new Date().toISOString()});sd(k,n);}
+function getNotes(id){return gd(`rb_notes_${id}`,[]);}
+
+/* ─── RECEIPT SEQ ─── */
+function nextRcptNo(){const n=(gd('rb_rcpt_seq',0)||0)+1;sd('rb_rcpt_seq',n);return String(n).padStart(4,'0');}
+
+/* ─── STATUS ─── */
+function getStatus(room,bill,y,m){
+  if(!room.tenantName||!room.tenantName.trim())return 'v';
+  if(!bill)return 'n';
+  if(bill.paid)return 'p';
+  const today=new Date();
+  if(y<today.getFullYear()||(y===today.getFullYear()&&m<today.getMonth()))return 'r';
+  if(y===today.getFullYear()&&m===today.getMonth()&&today.getDate()>room.due)return 'r';
+  return 'o';
+}
+const SLBL={p:'Paid',o:'Pending',r:'Overdue',v:'Vacant',n:'No Entry'};
+function isDueSoon(room){const t=new Date(),d=new Date(t.getFullYear(),t.getMonth(),room.due),diff=(d-t)/864e5;return diff>=0&&diff<=3;}
+function daysLeft(room){return Math.max(0,Math.round((new Date(new Date().getFullYear(),new Date().getMonth(),room.due)-new Date())/864e5));}
+
+/* ================================================================
+   RENDER DASHBOARD
+   ================================================================ */
+function renderDashboard(){
+  const rooms=getRooms(),settings=getSettings();
+  let col=0,pen=0,ov=0,vac=0,occ=0,paidC=0,ovC=0,penC=0;
+  rooms.forEach(r=>{
+    const b=getRoomBill(curY,curM,r.id),s=getStatus(r,b,curY,curM);
+    if(s==='v'){vac++;return;}
+    occ++;
+    if(s==='p'){col+=b.total;paidC++;}
+    else if(s==='r'&&b){ov+=b.total;ovC++;}
+    else if(s==='o'&&b){pen+=b.total;penC++;}
+  });
+
+  document.getElementById('sumGrid').innerHTML=`
+    <div class="sc g"><div class="sc-ico">💰</div><div class="sc-lbl">Collected</div><div class="sc-val g">₹${fmt(col)}</div><div class="sc-sub">${paidC} paid</div></div>
+    <div class="sc o"><div class="sc-ico">⏳</div><div class="sc-lbl">Pending</div><div class="sc-val o">₹${fmt(pen)}</div><div class="sc-sub">${penC} rooms</div></div>
+    <div class="sc r"><div class="sc-ico">🚨</div><div class="sc-lbl">Overdue</div><div class="sc-val r">₹${fmt(ov)}</div><div class="sc-sub">${ovC} rooms</div></div>
+    <div class="sc b"><div class="sc-ico">🏠</div><div class="sc-lbl">Occupancy</div><div class="sc-val b">${rooms.length?Math.round(occ/rooms.length*100):0}%</div><div class="sc-sub">${occ}/${rooms.length}</div></div>`;
+
+  const elecCol=rooms.reduce((a,r)=>{const b=getRoomBill(curY,curM,r.id);return a+(b&&b.paid?b.electricity:0);},0);
+  document.getElementById('chips').innerHTML=`
+    <div class="chip"><div class="cdot" style="background:var(--pu)"></div>Elec: ₹${fmt(elecCol)}</div>
+    <div class="chip"><div class="cdot" style="background:var(--o)"></div>Total Due: ₹${fmt(pen+ov)}</div>
+    <div class="chip"><div class="cdot" style="background:var(--bl)"></div>Vacant: ${vac}</div>
+    <div class="chip"><div class="cdot" style="background:var(--g)"></div>${MONTHS[curM].slice(0,3)} ${curY}</div>`;
+
+  const s=getSettings(),tok=lsRaw('rb_gtok');
+  document.getElementById('gPromo').innerHTML=(!s.googleClientId&&!tok)?`
+    <div class="gpromo"><div class="gp-ico">☁️</div><div>
+      <div class="gp-tit">Enable Google Drive Backup</div>
+      <div class="gp-txt">Auto-save every change. Safe if phone is lost or browser storage clears.</div>
+      <div style="margin-top:8px;"><button class="btn btn-acc" style="width:auto;padding:6px 13px;margin:0;font-size:.73rem;" onclick="showTab('settings')">Set Up →</button></div>
+    </div></div>`:'';
+
+  const floorOrder=['Ground','First','Second','Third'];
+  const floors=[...new Set(rooms.map(r=>r.floor))].sort((a,b)=>floorOrder.indexOf(a)-floorOrder.indexOf(b));
+  let html='';
+  floors.forEach(fl=>{
+    const fr=rooms.filter(r=>r.floor===fl);
+    const fp=fr.filter(r=>getStatus(r,getRoomBill(curY,curM,r.id),curY,curM)==='p').length;
+    html+=`<div class="floor-sec"><div class="floor-hd"><div class="floor-tag">${fl} Floor</div><div class="floor-info">${fp}/${fr.length} paid</div></div>`;
+    fr.forEach(r=>html+=renderRoomCard(r,getRoomBill(curY,curM,r.id),settings));
+    html+='</div>';
+  });
+  document.getElementById('rooms').innerHTML=html;
+  openPanels.forEach(id=>{
+    const p=document.getElementById(`rp-${id}`),a=document.getElementById(`ra-${id}`);
+    if(p){p.classList.add('open');if(a)a.classList.add('up');}
+  });
+}
+
+function renderRoomCard(room,bill,settings){
+  const s=getStatus(room,bill,curY,curM);
+  const isV=s==='v',isOpen=openPanels.has(room.id);
+  const total=bill?bill.total:0;
+  const lmap={p:'lp',o:'lo',r:'lr',v:'lv',n:'ln'};
+  const ds=!isV&&!bill&&isDueSoon(room);
+  return `<div class="rcard ${lmap[s]}" id="rc-${room.id}">
+    <div class="rhdr" onclick="togglePanel(${room.id})">
+      <div class="rlft">
+        <div class="ravt ${s}">${room.id}</div>
+        <div>
+          <div class="rname">${isV?'<span style="color:var(--muted);font-style:italic;font-weight:400">Vacant</span>':escH(room.tenantName)}${ds?`<span class="duewarn">⚡ ${daysLeft(room)}d</span>`:''}</div>
+          <div class="rdet">₹${fmt(room.rent)}/mo · Due ${room.due}${sfx(room.due)}</div>
+        </div>
+      </div>
+      <div class="rrgt">
+        <span class="pill ${s}">${SLBL[s]}</span>
+        ${(bill&&!isV)?`<div class="ramt">₹${fmt(total)}</div>`:''}
+        <div class="rarr ${isOpen?'up':''}" id="ra-${room.id}">▼</div>
+      </div>
+    </div>
+    <div class="rpanel ${isOpen?'open':''}" id="rp-${room.id}">
+      ${renderPanel(room,bill,settings,s)}
+    </div>
+  </div>`;
+}
+
+function renderPanel(room,bill,settings,s){
+  const isV=s==='v',er=parseFloat(settings.elecRate)||8;
+  if(isV){
+    const last=getTenantLog(room.id).slice(-1)[0];
+    return `<div class="pi">
+      <div class="ig">
+        <div class="ic"><div class="icl">Base Rent</div><div class="icv">₹${fmt(room.rent)}</div></div>
+        <div class="ic"><div class="icl">Last Tenant</div><div class="icv" style="font-size:.74rem;">${last?escH(last.name):'—'}</div></div>
+      </div>
+      <button class="btn btn-acc" onclick="openTM(${room.id})">➕ Add Tenant</button>
+    </div>`;
+  }
+
+  const hasBill=!!bill,prev=Number(room.lastMeterReading)||0,notes=getNotes(room.id);
+  let h=`<div class="pi">
+    <div class="ig">
+      <div class="ic"><div class="icl">Tenant</div><div class="icv" style="font-size:.76rem;">${escH(room.tenantName)}</div></div>
+      <div class="ic"><div class="icl">Mobile</div><div class="icv" style="font-size:.76rem;">${room.tenantPhone||'—'}</div></div>
+      <div class="ic"><div class="icl">Move-in</div><div class="icv" style="font-size:.72rem;">${fmtD(room.moveInDate)}</div></div>
+      <div class="ic"><div class="icl">Deposit</div><div class="icv">₹${fmt(room.deposit||0)}</div></div>
+    </div>`;
+
+  if(!hasBill){
+    h+=`<div class="stt">Meter – ${MONTHS[curM]} ${curY}</div>
+      <div class="frow2">
+        <div class="fg"><label class="flbl">Prev Reading</label>
+          <input class="fin" type="number" id="prev-${room.id}" value="${prev}" readonly style="opacity:.55;"/></div>
+        <div class="fg"><label class="flbl">Current Reading *</label>
+          <input class="fin" type="number" id="curr-${room.id}" placeholder="Enter reading" inputmode="decimal" oninput="liveCalc(${room.id})"/></div>
+      </div>
+      <div class="ferr" id="cerr-${room.id}"></div>
+      <div id="bprev-${room.id}"></div>
+      <div class="togrow">
+        <div class="toglbl">Mark as Paid <small>right now</small></div>
+        <label class="tog"><input type="checkbox" id="paid-${room.id}"/><span class="tsl"></span></label>
+      </div>
+      <div class="fg" style="margin-bottom:9px;">
+        <label class="flbl">Note (optional)</label>
+        <textarea class="ftxt" id="note-${room.id}" placeholder="Partial payment, complaint…" style="min-height:46px;"></textarea>
+      </div>
+      <button class="btn btn-acc" onclick="saveBill(${room.id})">💾 Save Bill</button>`;
+  } else {
+    const paidS=s==='p';
+    h+=`<div class="stt">Bill – ${MONTHS[curM]} ${curY}</div>
+      <div class="bprev">
+        <div class="brow"><span class="brl">Prev Reading</span><span class="brv">${bill.prevReading} u</span></div>
+        <div class="brow"><span class="brl">Curr Reading</span><span class="brv">${bill.currReading} u</span></div>
+        <div class="brow"><span class="brl">Units Used</span><span class="brv">${bill.units} u</span></div>
+        <div class="brow"><span class="brl">Electricity (₹${er} × ${bill.units})</span><span class="brv">₹${fmt(bill.electricity)}</span></div>
+        <div class="brow"><span class="brl">Rent</span><span class="brv">₹${fmt(bill.rent)}</span></div>
+        <div class="brow tot"><span class="brl">Total</span><span class="brv">₹${fmt(bill.total)}</span></div>
+      </div>
+      <div class="togrow">
+        <div class="toglbl">Paid <small style="color:${paidS?'var(--g)':'var(--o)'};">${paidS?'✓ Yes':'✗ No'}</small></div>
+        <label class="tog"><input type="checkbox" id="paid-${room.id}" ${bill.paid?'checked':''} onchange="togglePaid(${room.id})"/><span class="tsl"></span></label>
+      </div>
+      <div class="g2">
+        ${room.tenantPhone?`<button class="btn btn-wa" onclick="sendWABill(${room.id})">📲 Send Bill</button>`:`<button class="btn btn-gh" onclick="openTM(${room.id})">📞 Add Phone</button>`}
+        <button class="btn btn-pu" onclick="openReceipt(${room.id})">🧾 Receipt</button>
+      </div>
+      <div class="g2" style="margin-top:5px;">
+        ${room.tenantPhone?`<button class="btn btn-gh" onclick="sendWAReminder(${room.id})">🔔 Remind</button>`:'<div></div>'}
+        <button class="btn btn-r" onclick="doResetBill(${room.id})">🗑 Reset Entry</button>
+      </div>`;
+  }
+
+  if(notes.length){
+    h+=`<div class="stt" style="margin-top:11px;">Recent Notes</div>`;
+    notes.slice(-3).reverse().forEach(n=>{
+      h+=`<div class="note-card"><div class="note-date">${fmtD(n.dt)}</div>${escH(n.note)}</div>`;
+    });
+  }
+
+  h+=`<div class="stt" style="margin-top:10px;">Actions</div>
+    <div class="g3">
+      <button class="btn btn-gh" onclick="openTM(${room.id})">👤 Edit</button>
+      <button class="btn btn-gh" onclick="doAddNote(${room.id})">📝 Note</button>
+      <button class="btn btn-r" onclick="openVM(${room.id})">🚪 Vacate</button>
+    </div></div>`;
+  return h;
+}
+
+/* ─── LIVE CALC ─── */
+function liveCalc(rid){
+  const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  if(!room)return;
+  const er=parseFloat(settings.elecRate)||8;
+  const prevEl=document.getElementById('prev-'+rid),currEl=document.getElementById('curr-'+rid);
+  const errEl=document.getElementById('cerr-'+rid),preEl=document.getElementById('bprev-'+rid);
+  if(!currEl||!preEl)return;
+  const prev=parseFloat(prevEl?prevEl.value:0)||0,curr=parseFloat(currEl.value);
+  if(!currEl.value.trim()||isNaN(curr)){preEl.innerHTML='';if(errEl)errEl.textContent='';return;}
+  if(curr<prev){if(errEl)errEl.textContent='⚠ Must be ≥ '+prev;preEl.innerHTML='';return;}
+  if(errEl)errEl.textContent='';
+  const u=curr-prev,el=Math.round(u*er),tot=room.rent+el;
+  preEl.innerHTML=`<div class="bprev">
+    <div class="brow"><span class="brl">Units</span><span class="brv">${u}</span></div>
+    <div class="brow"><span class="brl">Electricity</span><span class="brv">₹${fmt(el)}</span></div>
+    <div class="brow"><span class="brl">Rent</span><span class="brv">₹${fmt(room.rent)}</span></div>
+    <div class="brow tot"><span class="brl">Total Due</span><span class="brv">₹${fmt(tot)}</span></div>
+  </div>`;
+}
+
+/* ─── SAVE BILL ─── */
+function saveBill(rid){
+  const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  if(!room){toast('Room not found','err');return;}
+  const er=parseFloat(settings.elecRate)||8;
+  const prevEl=document.getElementById('prev-'+rid),currEl=document.getElementById('curr-'+rid);
+  const paidEl=document.getElementById('paid-'+rid),noteEl=document.getElementById('note-'+rid);
+  if(!currEl||!currEl.value.trim()){toast('Enter current meter reading','err');return;}
+  const prev=parseFloat(prevEl?prevEl.value:0)||0,curr=parseFloat(currEl.value);
+  if(isNaN(curr)||curr<0){toast('Invalid reading','err');return;}
+  if(curr<prev){toast('Current must be ≥ '+prev,'err');return;}
+  const u=curr-prev,el=Math.round(u*er),tot=room.rent+el;
+  const paid=paidEl?paidEl.checked:false;
+  const rec={roomId:rid,prevReading:prev,currReading:curr,units:u,electricity:el,rent:room.rent,total:tot,paid,savedAt:new Date().toISOString(),tenantName:room.tenantName,receiptNo:paid?nextRcptNo():null};
+  saveRoomBill(curY,curM,rid,rec);
+  saveRooms(rooms.map(r=>r.id===rid?{...r,lastMeterReading:curr}:r));
+  if(noteEl&&noteEl.value.trim())addNote(rid,noteEl.value.trim());
+  toast('Bill saved ✓','ok');
+  openPanels.add(rid);
+  renderDashboard();updateAlertBadge();
+}
+
+/* ─── RESET BILL — FULLY FIXED ─── */
+function doResetBill(rid){
+  // getRoomBill uses String(rid) internally — safe regardless of type
+  const bill=getRoomBill(curY,curM,rid);
+  if(!bill){toast('No bill found for this room','err');return;}
+  showConfirm(
+    '🗑️ Reset Entry',
+    'Reset '+MONTHS[curM]+' bill for Room '+rid+'?\n\nMeter reading will revert to '+bill.prevReading+' units.',
+    'Reset',
+    function(){
+      const rooms=getRooms();
+      // Revert lastMeterReading to what it was before this bill was saved
+      saveRooms(rooms.map(r=>r.id===rid?{...r,lastMeterReading:bill.prevReading}:r));
+      // Delete bill using consistent String key
+      deleteRoomBill(curY,curM,rid);
+      toast('Bill reset successfully','info');
+      openPanels.add(rid);
+      renderDashboard();updateAlertBadge();
+    }
+  );
+}
+
+/* ─── TOGGLE PAID ─── */
+function togglePaid(rid){
+  const bill=getRoomBill(curY,curM,rid);
+  if(!bill){toast('No bill found','err');return;}
+  const el=document.getElementById('paid-'+rid);
+  if(!el)return;
+  bill.paid=el.checked;
+  if(el.checked&&!bill.receiptNo)bill.receiptNo=nextRcptNo();
+  saveRoomBill(curY,curM,rid,bill);
+  toast(bill.paid?'Marked Paid ✓':'Marked Unpaid','ok');
+  _schedSync();
+  renderDashboard();updateAlertBadge();
+}
+
+/* ─── WHATSAPP ─── */
+function sendWABill(rid){
+  const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  const bill=getRoomBill(curY,curM,rid);
+  if(!bill){toast('Save bill first','err');return;}
+  if(!room||!room.tenantPhone){toast('No phone number saved','err');return;}
+  const er=parseFloat(settings.elecRate)||8;
+  const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n━━━━━━━━━━━━━━\n📋 *Rent Bill – '+MONTHS[curM]+' '+curY+'*\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\n━━━━━━━━━━━━━━\n⚡ Electricity\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━\n💰 *Total: ₹'+fmt(bill.total)+'*\n📅 Due: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n━━━━━━━━━━━━━━\nKindly pay by due date. 🙏';
+  window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function sendWAReminder(rid){
+  const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  if(!room||!room.tenantPhone){toast('No phone number','err');return;}
+  const bill=getRoomBill(curY,curM,rid);
+  const amt=bill?bill.total:room.rent;
+  const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n\nDear '+room.tenantName+',\n\nFriendly reminder: Your rent for *'+MONTHS[curM]+' '+curY+'* is due.\n\nRoom: '+room.id+' | Amount: ₹'+fmt(amt)+'\nDue Date: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n\nPlease pay at the earliest. Thank you! 🙏';
+  window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+/* ─── RECEIPT ─── */
+function openReceipt(rid){
+  const rooms=getRooms(),settings=getSettings(),room=rooms.find(r=>r.id===rid);
+  const bill=getRoomBill(curY,curM,rid);
+  if(!bill){toast('Save bill first to generate receipt','err');return;}
+  _rcptData={room,bill,settings,month:MONTHS[curM],year:curY};
+  document.getElementById('rcptSub').textContent='Room '+room.id+' – '+MONTHS[curM]+' '+curY;
+  document.getElementById('rcptBody').innerHTML=buildReceipt(_rcptData);
+  openOv('ovReceipt');
+}
+
+function buildReceipt(d){
+  const {room,bill,settings,month,year}=d;
+  const er=parseFloat(settings.elecRate)||8,rcNo=bill.receiptNo||'DRAFT';
+  return `<div class="receipt">
+    <div class="rhead">
+      <div class="rhprop">${escH(settings.propertyName||'My Property')}</div>
+      <div class="rhtit">Rent Receipt</div>
+      <div class="rhsub">${month} ${year}</div>
+    </div>
+    <div class="rbody">
+      <div class="rr"><span class="rrl">Receipt No.</span><span class="rrv">#${rcNo}</span></div>
+      <div class="rr"><span class="rrl">Date Issued</span><span class="rrv">${fmtD(bill.savedAt)}</span></div>
+      <div class="rr"><span class="rrl">Room</span><span class="rrv">Room ${room.id} · ${room.floor} Floor</span></div>
+      <div class="rr"><span class="rrl">Tenant</span><span class="rrv">${escH(room.tenantName)}</span></div>
+      ${room.tenantPhone?'<div class="rr"><span class="rrl">Mobile</span><span class="rrv">'+room.tenantPhone+'</span></div>':''}
+      <div class="rr"><span class="rrl">Period</span><span class="rrv">${month} ${year}</span></div>
+      <div class="rr"><span class="rrl">Prev Reading</span><span class="rrv">${bill.prevReading} units</span></div>
+      <div class="rr"><span class="rrl">Curr Reading</span><span class="rrv">${bill.currReading} units</span></div>
+      <div class="rr"><span class="rrl">Units Used</span><span class="rrv">${bill.units} units</span></div>
+      <div class="rr"><span class="rrl">Electricity (₹${er} × ${bill.units})</span><span class="rrv">₹${fmt(bill.electricity)}</span></div>
+      <div class="rr"><span class="rrl">Rent</span><span class="rrv">₹${fmt(bill.rent)}</span></div>
+    </div>
+    <div class="rtot"><div class="rtl">Total Amount</div><div class="rtv">₹${fmt(bill.total)}</div></div>
+    <div class="rbody" style="text-align:center;padding:8px 15px;">
+      <div class="stamp ${bill.paid?'':'unpaid'}">${bill.paid?'✓ PAID':'PENDING'}</div>
+    </div>
+    <div class="rftr">
+      ${settings.landlordName?'Landlord: '+escH(settings.landlordName)+(settings.landlordPhone?' · '+settings.landlordPhone:'')+'<br/>':''}
+      This is a computer-generated receipt · RentBook Pro
+    </div>
+  </div>`;
+}
+
+function sendReceiptWA(){
+  if(!_rcptData){toast('No receipt loaded','err');return;}
+  const {room,bill,settings,month,year}=_rcptData;
+  if(!room.tenantPhone){toast('No phone number for this tenant','err');return;}
+  const er=parseFloat(settings.elecRate)||8,rcNo=bill.receiptNo||'DRAFT';
+  const msg='🏠 *'+(settings.propertyName||'My Property')+'*\n━━━━━━━━━━━━━━━\n🧾 *RENT RECEIPT #'+rcNo+'*\n━━━━━━━━━━━━━━━\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\nPeriod: '+month+' '+year+'\nDate: '+fmtD(bill.savedAt)+'\n━━━━━━━━━━━━━━━\n⚡ *Electricity*\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━━\n💰 *TOTAL: ₹'+fmt(bill.total)+'*\nStatus: '+(bill.paid?'✅ PAID':'⏳ PENDING')+'\n━━━━━━━━━━━━━━━\n'+(settings.landlordName?'Landlord: '+settings.landlordName+'\n':'')+(settings.landlordPhone?'Phone: '+settings.landlordPhone+'\n':'')+'Thank you! 🙏';
+  window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+/* ─── TENANT MODAL ─── */
+function openTM(rid){
+  _tmRoom=rid;
+  const room=getRooms().find(r=>r.id===rid);
+  const isV=!room||!room.tenantName;
+  document.getElementById('tmTit').textContent=(isV?'Add Tenant':'Edit Tenant')+' – Room '+rid;
+  document.getElementById('tmSub').textContent=isV?'Enter tenant details':'Previous history is preserved';
+  document.getElementById('tmName').value=room?room.tenantName||'':'';
+  document.getElementById('tmPhone').value=room?room.tenantPhone||'':'';
+  document.getElementById('tmDate').value=room?room.moveInDate||'':'';
+  document.getElementById('tmDeposit').value=room&&room.deposit?room.deposit:'';
+  openOv('ovTenant');
+}
+function confirmTenant(){
+  const name=document.getElementById('tmName').value.trim();
+  const phone=document.getElementById('tmPhone').value.trim();
+  const date=document.getElementById('tmDate').value;
+  const dep=parseInt(document.getElementById('tmDeposit').value)||0;
+  if(!name){toast('Enter tenant name','err');return;}
+  if(phone&&!/^\d{10}$/.test(phone)){toast('Phone must be exactly 10 digits','err');return;}
+  const rooms=getRooms(),room=rooms.find(r=>r.id===_tmRoom);
+  if(room&&room.tenantName&&room.tenantName!==name){
+    addTenantLog(_tmRoom,{name,phone,deposit:dep,moveInDate:date,date:new Date().toISOString(),prevName:room.tenantName});
+  }
+  saveRooms(rooms.map(r=>r.id===_tmRoom?{...r,tenantName:name,tenantPhone:phone,moveInDate:date,deposit:dep}:r));
+  closeOv('ovTenant');toast('Tenant saved ✓','ok');renderDashboard();updateAlertBadge();
+}
+
+/* ─── VACATE MODAL ─── */
+function openVM(rid){
+  _vmRoom=rid;
+  document.getElementById('vmDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('vmNotes').value='';
+  openOv('ovVacate');
+}
+function confirmVacate(){
+  const date=document.getElementById('vmDate').value,notes=document.getElementById('vmNotes').value.trim();
+  const rooms=getRooms(),room=rooms.find(r=>r.id===_vmRoom);
+  if(room){
+    addTenantLog(_vmRoom,{name:room.tenantName,phone:room.tenantPhone,deposit:room.deposit,moveInDate:room.moveInDate,moveOutDate:date,notes,date:new Date().toISOString(),type:'vacate'});
+  }
+  saveRooms(rooms.map(r=>r.id===_vmRoom?{...r,tenantName:'',tenantPhone:'',deposit:0,moveInDate:''}:r));
+  closeOv('ovVacate');toast('Room vacated','info');openPanels.delete(_vmRoom);renderDashboard();updateAlertBadge();
+}
+
+/* ─── ADD NOTE ─── */
+function doAddNote(rid){
+  const n=prompt('Add note for Room '+rid+':');
+  if(n&&n.trim()){addNote(rid,n.trim());toast('Note added ✓','ok');renderDashboard();}
+}
+
+/* ─── ALERTS ─── */
+function updateAlertBadge(){
+  const rooms=getRooms();
+  const urgC=rooms.filter(r=>{
+    const b=getRoomBill(curY,curM,r.id),s=getStatus(r,b,curY,curM);
+    return s==='r'||(s==='o'&&isDueSoon(r))||(s==='n'&&isDueSoon(r));
+  }).length;
+  const badge=document.getElementById('alertBadge');
+  if(badge)badge.style.display=urgC?'':'none';
+}
+
+function renderAlerts(){
+  const rooms=getRooms();
+  const items=[];
+  rooms.forEach(r=>{
+    const b=getRoomBill(curY,curM,r.id),s=getStatus(r,b,curY,curM);
+    if(s==='r')items.push({type:'urg',room:r,bill:b,msg:'Rent overdue since '+r.due+sfx(r.due)+' '+MONTHS[curM]});
+    else if(s==='o'&&isDueSoon(r))items.push({type:'wrn',room:r,bill:b,msg:'Due in '+daysLeft(r)+' day(s) – '+r.due+sfx(r.due)+' '+MONTHS[curM]});
+    if(s==='n')items.push({type:'inf',room:r,bill:null,msg:'No meter reading entered yet for '+MONTHS[curM]});
+  });
+  // update badge
+  const urgC=items.filter(i=>i.type==='urg'||i.type==='wrn').length;
+  const badge=document.getElementById('alertBadge');
+  if(badge)badge.style.display=urgC?'':'none';
+
+  const el=document.getElementById('alertsWrap');
+  if(!el)return;
+  if(!items.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">✅</div><div class="empty-txt">All clear! No alerts for '+MONTHS[curM]+'.</div></div>';
+    return;
+  }
+  const typeLabel={urg:'OVERDUE',wrn:'DUE SOON',inf:'INFO'};
+  el.innerHTML=items.map(i=>`<div class="nc ${i.type}">
+    <div class="nchd">
+      <div class="nctit">Room ${i.room.id} · ${escH(i.room.tenantName)||'—'}</div>
+      <span class="ncbdg ${i.type}">${typeLabel[i.type]}</span>
+    </div>
+    <div class="ncbody">${i.msg}${i.bill?' · ₹'+fmt(i.bill.total):i.room.tenantName?' · ₹'+fmt(i.room.rent):''}.</div>
+    <div class="ncact">
+      <button class="btn btn-gh" onclick="jumpToRoom(${i.room.id})">Open Room</button>
+      ${i.room.tenantPhone?`<button class="btn btn-wa" onclick="sendWAReminder(${i.room.id})">📲 Remind</button>`:''}
+    </div>
+  </div>`).join('');
+}
+
+function jumpToRoom(rid){
+  showTab('home');
+  openPanels.add(rid);
+  renderDashboard();
+  setTimeout(function(){
+    const el=document.getElementById('rc-'+rid);
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },120);
+}
+
+/* ─── HISTORY ─── */
+function renderHistory(){
+  const rooms=getRooms();
+  if(histRoom===null)histRoom=rooms[0]?rooms[0].id:1;
+  document.getElementById('rpkr').innerHTML=rooms.map(r=>`<div class="rpill ${r.id===histRoom?'on':''}" onclick="selHistR(${r.id})">R${r.id}${r.tenantName?' · '+r.tenantName.split(' ')[0]:''}</div>`).join('');
+  renderHistTable();
+}
+function selHistR(id){histRoom=id;renderHistory();}
+function renderHistTable(){
+  const el=document.getElementById('hwrap');if(!el)return;
+  const rows=[],now=new Date();
+  for(let i=0;i<36;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const b=getRoomBill(d.getFullYear(),d.getMonth(),histRoom);
+    if(b)rows.push({lbl:MONTHS[d.getMonth()].slice(0,3)+' '+d.getFullYear(),b});
+  }
+  if(!rows.length){el.innerHTML='<div class="empty"><div class="empty-ico">📭</div><div class="empty-txt">No history yet for this room</div></div>';return;}
+  const totCol=rows.reduce((a,r)=>a+(r.b.paid?r.b.total:0),0);
+  el.innerHTML=`<div style="font-size:.7rem;color:var(--muted);margin-bottom:7px;padding-left:1px;">${rows.length} months · Collected: <span style="color:var(--g);font-weight:700;">₹${fmt(totCol)}</span></div>
+  <div class="htable">
+    <div class="hrow hh"><div>Month</div><div>Total</div><div>Units</div><div>Elec</div><div>Status</div><div>Rcpt</div></div>
+    ${rows.map(r=>`<div class="hrow hd">
+      <div>${r.lbl}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-weight:600;">₹${fmt(r.b.total)}</div>
+      <div>${r.b.units}</div>
+      <div>₹${fmt(r.b.electricity)}</div>
+      <div style="color:${r.b.paid?'var(--g)':'var(--o)'};font-weight:700;">${r.b.paid?'✓ Paid':'Pending'}</div>
+      <div style="color:var(--muted);font-size:.6rem;">${r.b.receiptNo?'#'+r.b.receiptNo:'—'}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+/* ─── YEARLY ─── */
+function renderYearly(){
+  document.getElementById('yrLbl').textContent=selY;
+  const rooms=getRooms();let grand=0,cardsH='';
+  rooms.forEach(r=>{
+    let rt=0,mH='';
+    for(let m=0;m<12;m++){
+      const b=getRoomBill(selY,m,r.id);
+      if(b){
+        rt+=b.total;grand+=b.total;
+        mH+=`<div class="ymrow"><span class="ymla">${MONTHS[m]}</span><span class="ymtot" style="color:${b.paid?'var(--g)':'var(--o)'};">₹${fmt(b.total)} ${b.paid?'✓':'○'}</span></div>`;
+      }
+    }
+    if(!mH)return;
+    const key='y'+r.id,isE=yrExpanded.has(key);
+    cardsH+=`<div class="ycard">
+      <div class="ych" onclick="togYr('${key}')">
+        <div class="ychn">Room ${r.id}${r.tenantName?' · '+escH(r.tenantName):''}</div>
+        <div class="ycht">₹${fmt(rt)} ${isE?'▲':'▼'}</div>
+      </div>
+      <div class="ymon ${isE?'open':''}">${mH}</div>
+    </div>`;
+  });
+  if(!cardsH){
+    document.getElementById('yrReport').innerHTML='<div class="empty"><div class="empty-ico">📊</div><div class="empty-txt">No data for '+selY+'</div></div>';
+    return;
+  }
+  const activeRooms=rooms.filter(r=>{for(let m=0;m<12;m++)if(getRoomBill(selY,m,r.id))return true;return false;}).length;
+  document.getElementById('yrReport').innerHTML=`<div class="ytcard">
+    <div><div class="ytl">Total Income ${selY}</div><div class="ytv">₹${fmt(grand)}</div></div>
+    <div style="text-align:right;font-size:.68rem;color:var(--muted);">${activeRooms} rooms</div>
+  </div>${cardsH}`;
+}
+function togYr(k){if(yrExpanded.has(k))yrExpanded.delete(k);else yrExpanded.add(k);renderYearly();}
+function changeYear(d){selY+=d;renderYearly();}
+
+/* ─── SETTINGS ─── */
+function renderSettings(){
+  const s=getSettings();
+  document.getElementById('sProp').value=s.propertyName||'';
+  document.getElementById('sElec').value=s.elecRate||8;
+  document.getElementById('sLandlord').value=s.landlordName||'';
+  document.getElementById('sLandPhone').value=s.landlordPhone||'';
+  const tok=lsRaw('rb_gtok');
+  _renderDriveW(!!tok);
+  if(tok)document.getElementById('driveFileRow').style.display='';
+  const rooms=getRooms();
+  let h='<div class="scard-hd">🏠 Room Configuration</div>';
+  rooms.forEach(r=>{
+    const hist=getTenantLog(r.id);
+    h+=`<div class="srow">
+      <div><div class="srl">Room ${r.id} · ${r.floor}</div><div class="srs">Due ${r.due}${sfx(r.due)} · ${hist.length} tenant(s)</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+        <div style="font-size:.58rem;color:var(--muted);">Rent ₹</div>
+        <input class="sinput" type="number" value="${r.rent}" style="width:80px;" onchange="saveRoomRent(${r.id},this.value)"/>
+      </div>
+    </div>`;
+  });
+  document.getElementById('roomCfg').innerHTML=h;
+  const ls=lsRaw('rb_lsync');
+  const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
+}
+function saveRoomRent(rid,val){
+  const v=parseInt(val);
+  if(isNaN(v)||v<=0){toast('Invalid rent amount','err');return;}
+  saveRooms(getRooms().map(r=>r.id===rid?{...r,rent:v}:r));
+  toast('Rent updated ✓','ok');
+}
+function addRoom(){
+  const floor=document.getElementById('nrFloor').value;
+  const rent=parseInt(document.getElementById('nrRent').value);
+  const due=parseInt(document.getElementById('nrDue').value);
+  if(!rent||rent<=0){toast('Enter valid rent','err');return;}
+  if(!due||due<1||due>28){toast('Due date must be 1–28','err');return;}
+  const rooms=getRooms(),maxId=Math.max(...rooms.map(r=>r.id),0);
+  rooms.push({id:maxId+1,floor,rent,due,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''});
+  saveRooms(rooms);
+  document.getElementById('nrRent').value='';
+  document.getElementById('nrDue').value='';
+  toast('Room added ✓','ok');renderSettings();
+}
+
+/* ─── EXPORT / IMPORT ─── */
+function exportData(){
+  const blob=new Blob([JSON.stringify(_buildDump(),null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='rentbook-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();toast('Backup exported ✓','ok');
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      showConfirm('📥 Import Backup','This will overwrite ALL current data. This cannot be undone.','Import',function(){
+        _restoreDump(d);toast('Data restored ✓','ok');setTimeout(function(){location.reload();},800);
+      });
+    }catch{toast('Invalid backup file','err');}
+  };
+  reader.readAsText(file);
+}
+
+/* ─── NAV ─── */
+function showTab(tab){
+  ['home','alerts','history','yearly','settings'].forEach(function(t){
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+    const b=document.getElementById('bn-'+t);if(b)b.classList.toggle('on',t===tab);
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.toggle('on',el.dataset.tab===tab);});
+  if(tab==='history')renderHistory();
+  if(tab==='yearly')renderYearly();
+  if(tab==='settings')renderSettings();
+  if(tab==='alerts')renderAlerts();
+}
+function changeMonth(d){
+  let m=curM+d,y=curY;
+  if(m<0){m=11;y--;}if(m>11){m=0;y++;}
+  const now=new Date();
+  if(y>now.getFullYear()||(y===now.getFullYear()&&m>now.getMonth()))return;
+  curM=m;curY=y;updML();renderDashboard();updateAlertBadge();
+}
+function updML(){document.getElementById('mLabel').textContent=MONTHS[curM].slice(0,3)+' '+curY;}
+function togglePanel(id){if(openPanels.has(id))openPanels.delete(id);else openPanels.add(id);renderDashboard();}
+
+/* ─── MODALS ─── */
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+
+/* ─── CUSTOM CONFIRM ─── */
+function showConfirm(tit,msg,okLabel,cb,variant){
+  variant=variant||'btn-r';
+  document.getElementById('cfmTit').textContent=tit;
+  document.getElementById('cfmMsg').textContent=msg;
+  const okBtn=document.getElementById('cfmOkBtn');
+  okBtn.textContent=okLabel;okBtn.className='btn '+variant;
+  _cfmCb=cb;
+  document.getElementById('cfmOv').classList.add('open');
+}
+function cfmResolve(yes){
+  document.getElementById('cfmOv').classList.remove('open');
+  if(yes&&_cfmCb)_cfmCb();
+  _cfmCb=null;
+}
+
+/* ─── UTILS ─── */
+function fmt(n){return Math.round(n||0).toLocaleString('en-IN');}
+function sfx(d){if(d>=11&&d<=13)return 'th';return['th','st','nd','rd','th','th','th','th','th','th'][d%10];}
+function fmtD(iso){
+  if(!iso)return '—';
+  try{const d=new Date(iso);return d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+d.getFullYear();}
+  catch{return '—';}
+}
+function escH(s){
+  if(!s)return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg,type){
+  type=type||'ok';
+  const el=document.getElementById('toast');
+  const icons={ok:'✓',err:'✗',info:'ℹ'};
+  el.innerHTML='<span>'+(icons[type]||'')+'</span>'+msg;
+  el.className='toast show '+type;
+  clearTimeout(window._tt);
+  window._tt=setTimeout(function(){el.classList.remove('show');},2800);
+}
+
+/* ─── INIT ─── */
+function init(){
+  const now=new Date();
+  curM=now.getMonth();curY=now.getFullYear();selY=now.getFullYear();
+  updML();
+  const s=getSettings();
+  document.getElementById('brandProp').textContent=s.propertyName||'My Property';
+  getRooms();
+  renderDashboard();
+  updateAlertBadge();
+  _syncUI('','Not connected');
+  const ls=lsRaw('rb_lsync');
+  const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
+  if(s.googleClientId)loadGScripts(s.googleClientId);
+}
+init();
+</script>
+</body>
+</html>
