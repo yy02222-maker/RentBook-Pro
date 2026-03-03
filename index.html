@@ -5,15 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="RentBook Pro"/>
+<meta name="apple-mobile-web-app-title" content="RentBook"/>
 <meta name="theme-color" content="#070d1a"/>
-<meta name="description" content="Property rent management for landlords"/>
-<meta name="mobile-web-app-capable" content="yes"/>
 <title>RentBook Pro</title>
-<link rel="manifest" href="/RentBook-Pro/manifest.json"/>
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/yy02222-maker/RentBook-Pro/main/icon-192.png"/>
-<link rel="apple-touch-icon" sizes="192x192" href="https://raw.githubusercontent.com/yy02222-maker/RentBook-Pro/main/icon-192.png"/>
-<link rel="apple-touch-icon" sizes="512x512" href="https://raw.githubusercontent.com/yy02222-maker/RentBook-Pro/main/icon-512.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
@@ -1786,61 +1780,6 @@ function init(){
 
 // Start with auth check
 initAuth();
-
-/* ── Service Worker Registration ── */
-if('serviceWorker' in navigator){
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('/RentBook-Pro/sw.js')
-      .then(function(reg){ console.log('SW registered:', reg.scope); })
-      .catch(function(err){ console.log('SW registration failed:', err); });
-  });
-}
-
-/* ── PWA Install Prompt (Android Chrome) ── */
-let _deferredInstallPrompt = null;
-window.addEventListener('beforeinstallprompt', function(e){
-  e.preventDefault();
-  _deferredInstallPrompt = e;
-  // Show install banner after 3 seconds if not already installed
-  setTimeout(_showInstallBanner, 3000);
-});
-
-function _showInstallBanner(){
-  if(!_deferredInstallPrompt) return;
-  if(window.matchMedia('(display-mode: standalone)').matches) return; // already installed
-  const banner = document.createElement('div');
-  banner.id = 'installBanner';
-  banner.innerHTML = \`
-    <div style="position:fixed;bottom:calc(68px + env(safe-area-inset-bottom,0px) + 10px);left:12px;right:12px;
-      background:#1a2838;border:1px solid #f5a623;border-radius:14px;padding:13px 14px;
-      display:flex;align-items:center;gap:12px;z-index:9998;box-shadow:0 8px 32px rgba(0,0,0,.6);
-      animation:slideup .3s ease;">
-      <div style="width:42px;height:42px;border-radius:10px;background:#f5a623;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🏠</div>
-      <div style="flex:1;">
-        <div style="font-size:.82rem;font-weight:700;color:#eaeff7;">Install RentBook Pro</div>
-        <div style="font-size:.68rem;color:#a6b8ce;margin-top:2px;">Add to home screen for app experience</div>
-      </div>
-      <button onclick="_doInstall()" style="background:#f5a623;color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.75rem;cursor:pointer;flex-shrink:0;">Install</button>
-      <button onclick="document.getElementById('installBanner').remove()" style="background:none;border:none;color:#4a6278;font-size:1.1rem;cursor:pointer;padding:4px;flex-shrink:0;">✕</button>
-    </div>\`;
-  document.body.appendChild(banner);
-}
-
-function _doInstall(){
-  if(!_deferredInstallPrompt) return;
-  _deferredInstallPrompt.prompt();
-  _deferredInstallPrompt.userChoice.then(function(result){
-    _deferredInstallPrompt = null;
-    const banner = document.getElementById('installBanner');
-    if(banner) banner.remove();
-    if(result.outcome === 'accepted') toast('RentBook Pro installed! 🎉','ok');
-  });
-}
-
-window.addEventListener('appinstalled', function(){
-  toast('App installed successfully! 🎉','ok');
-  _deferredInstallPrompt = null;
-});
 </script>
 </body>
 </html>
