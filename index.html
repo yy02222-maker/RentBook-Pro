@@ -1145,6 +1145,10 @@ async function _restoreFromDrive(){
   _restoreDump(data);
   _log('restore: applied to localStorage');
   _restoring=false;
+  // Update topbar property name immediately after restore
+  const _rs=getSettings();
+  const _bp=document.getElementById('brandProp');
+  if(_bp)_bp.textContent=_rs.propertyName||'My Property';
   const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
   lsRaw('rb_lsync',ts);
   _log('restore: COMPLETE at '+ts);
