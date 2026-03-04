@@ -444,10 +444,15 @@ select.sinput option{background:var(--s2);}
 <!-- SYNC BAR -->
 <div class="sbar">
   <div class="sleft"><div class="sdot" id="sdot"></div><span id="stxt">Not connected</span></div>
-  <button class="sbtn" id="sact" onclick="handleSyncBtn()">Connect Drive</button>
+  <button class="sbtn" id="sact" onclick="handleSyncBtn()">Connect Drive</button><button class="sbtn" onclick="document.getElementById('dbgPanel').style.display='block'" style="margin-left:8px;color:var(--muted);">🔍</button>
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="dbgPanel" style="display:none;background:#0a1520;border:1px solid #f5a623;border-radius:8px;margin:6px 12px;padding:8px 10px;">
+  <div style="font-size:.6rem;font-weight:700;color:#f5a623;margin-bottom:4px;">🔍 Sync Debug Log</div>
+  <pre id="dbgLog" style="font-size:.55rem;color:#a6b8ce;white-space:pre-wrap;margin:0;line-height:1.6;"></pre>
+  <button onclick="document.getElementById('dbgPanel').style.display='none'" style="margin-top:6px;font-size:.6rem;background:none;border:1px solid #223350;border-radius:4px;color:#a6b8ce;padding:2px 8px;cursor:pointer;">Hide</button>
+</div>
 
 <!-- HOME TAB -->
 <div id="tab-home">
@@ -883,6 +888,7 @@ async function _processToken(token){
     lsRaw('rb_gtok', token);
     lsRaw('rb_gtok_exp', String(Date.now() + 3500000));
     _gTok = token;
+    _log('login: success email='+info.email+' token='+token.slice(0,8)+'...');
     _showApp();
     setTimeout(function(){
       _applyConnected();
@@ -969,6 +975,16 @@ function doSignOut(){
    GOOGLE DRIVE ENGINE — pure fetch, no gapi/GIS scripts
    ════════════════════════════════════════════════ */
 const GD={FILE:'rentbook-pro-data.json'};
+
+/* ── DEBUG LOG (visible on screen) ── */
+const _dbg=[];
+function _log(msg){
+  const t=new Date().toLocaleTimeString('en-IN');
+  _dbg.push('['+t+'] '+msg);
+  console.log('[RB]',msg);
+  const el=document.getElementById('dbgLog');
+  if(el){el.textContent=_dbg.slice(-12).join('\n');}
+}
 let _gTok=null,_gFid=null,_syncTimer=null,_syncLock=false,_restoring=false;
 
 function _isTokenExpired(){
@@ -978,22 +994,26 @@ function _isTokenExpired(){
 }
 function _driveInit(){
   const tok=lsRaw('rb_gtok');
+  _log('driveInit: token='+(tok?'YES ('+tok.slice(0,8)+'...)':'NO'));
   if(tok){
     _gTok=tok;
     _applyConnected();
     // If localStorage has no app data (e.g. cache was cleared), restore from Drive
     const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+    _log('driveInit: hasData='+hasData+' rooms='+localStorage.getItem('rb_rooms')?.slice(0,30));
     if(!hasData){
       _syncUI('spin','Restoring your data from Drive…');
       _restoreFromDrive().then(function(){
         renderDashboard();updateAlertBadge();
         toast('✓ Data restored from Google Drive','ok');
       }).catch(function(e){
+        _log('driveInit restore ERROR: '+e.message);
         _syncUI('err','Restore failed – tap Sync Now');
-        console.error('Drive restore error:',e);
       });
+    }else{
+      _log('driveInit: data exists locally, skipping restore');
     }
-  }else{_syncUI('','Not connected');_renderDriveW(false);}
+  }else{_syncUI('','Not connected');_renderDriveW(false);_log('driveInit: no token');}
 }
 function _applyConnected(){
   _syncUI('on','Backed up to Drive');
@@ -1033,8 +1053,13 @@ async function forceSyncNow(){
   _syncLock=true;
   _syncUI('spin','Syncing…');
   try{
-    const json=JSON.stringify(_buildDump());
+    const dump=_buildDump();
+    const keys=Object.keys(dump);
+    _log('sync: uploading '+keys.length+' keys: '+keys.join(', '));
+    const json=JSON.stringify(dump);
+    _log('sync: payload size='+json.length+' bytes');
     if(!_gFid)_gFid=await _findOrCreate();
+    _log('sync: fileId='+_gFid);
     const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_gFid}?uploadType=media`,{
       method:'PATCH',headers:{'Authorization':`Bearer ${_gTok}`,'Content-Type':'application/json'},body:json
     });
@@ -1043,9 +1068,11 @@ async function forceSyncNow(){
     const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     lsRaw('rb_lsync',ts);
     const lsEl=document.getElementById('lastSync');if(lsEl)lsEl.textContent=ts;
+    _log('sync: SUCCESS at '+ts+' fileId='+_gFid);
     _syncUI('on','Backed up · '+ts);
     document.getElementById('sact').textContent='Sync Now';
   }catch(e){
+    _log('sync: ERROR '+e.message);
     if(String(e).includes('401')){lsRaw('rb_gtok',null);_gTok=null;_gFid=null;_syncUI('err','Session expired – tap Reconnect');document.getElementById('sact').textContent='Reconnect';}
     else{
       _syncUI('err','Backup failed – tap Sync Now to retry');
@@ -1077,35 +1104,45 @@ async function _restoreFromDrive(){
   if(!_gTok)return;
   _restoring=true;
   clearTimeout(_syncTimer);
+  _log('restore: starting, token='+_gTok.slice(0,8)+'...');
   // Find the backup file
   const listRes=await fetch(
     'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent("name='"+GD.FILE+"'")+'&fields=files(id)',
     {headers:{Authorization:'Bearer '+_gTok}}
   );
+  _log('restore: list status='+listRes.status);
   if(listRes.status===401){_restoring=false;lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
   const listJson=await listRes.json();
+  _log('restore: found '+((listJson.files&&listJson.files.length)||0)+' backup file(s)');
   if(!listJson.files||!listJson.files.length){
     _restoring=false;
     _syncUI('on','Connected – no backup found yet');
     return; // no backup file exists yet — fresh setup
   }
   _gFid=listJson.files[0].id;
+  _log('restore: downloading fileId='+_gFid);
   const dlRes=await fetch(
     'https://www.googleapis.com/drive/v3/files/'+_gFid+'?alt=media',
     {headers:{Authorization:'Bearer '+_gTok}}
   );
   if(dlRes.status===401){_restoring=false;lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
+  _log('restore: download status='+dlRes.status);
   let data;
-  try{ data=await dlRes.json(); }catch(e){ _restoring=false; throw new Error('Corrupt backup file'); }
+  try{ data=await dlRes.json(); }catch(e){ _restoring=false; _log('restore: CORRUPT backup'); throw new Error('Corrupt backup file'); }
   if(!data||typeof data!=='object'||Object.keys(data).length===0){
     _restoring=false;
+    _log('restore: backup is EMPTY');
     _syncUI('on','Connected – backup empty, enter data to begin');
     return;
   }
+  const dkeys=Object.keys(data);
+  _log('restore: got '+dkeys.length+' keys: '+dkeys.join(', '));
   _restoreDump(data);
+  _log('restore: applied to localStorage');
   _restoring=false;
   const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
   lsRaw('rb_lsync',ts);
+  _log('restore: COMPLETE at '+ts);
   _syncUI('on','Restored from Drive · '+ts);
 }
 function _syncUI(state,txt){
