@@ -1039,6 +1039,7 @@ async function forceSyncNow(){
       method:'PATCH',headers:{'Authorization':`Bearer ${_gTok}`,'Content-Type':'application/json'},body:json
     });
     if(res.status===401){throw new Error('401');}
+    if(!res.ok){throw new Error('HTTP '+res.status);}
     const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
     lsRaw('rb_lsync',ts);
     const lsEl=document.getElementById('lastSync');if(lsEl)lsEl.textContent=ts;
@@ -1046,7 +1047,10 @@ async function forceSyncNow(){
     document.getElementById('sact').textContent='Sync Now';
   }catch(e){
     if(String(e).includes('401')){lsRaw('rb_gtok',null);_gTok=null;_gFid=null;_syncUI('err','Session expired – tap Reconnect');document.getElementById('sact').textContent='Reconnect';}
-    else _syncUI('err','Sync failed – tap to retry');
+    else{
+      _syncUI('err','Backup failed – tap Sync Now to retry');
+      toast('Drive backup failed! Tap Sync Now.','err');
+    }
   }finally{
     _syncLock=false;
   }
@@ -1091,7 +1095,13 @@ async function _restoreFromDrive(){
     {headers:{Authorization:'Bearer '+_gTok}}
   );
   if(dlRes.status===401){_restoring=false;lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
-  const data=await dlRes.json();
+  let data;
+  try{ data=await dlRes.json(); }catch(e){ _restoring=false; throw new Error('Corrupt backup file'); }
+  if(!data||typeof data!=='object'||Object.keys(data).length===0){
+    _restoring=false;
+    _syncUI('on','Connected – backup empty, enter data to begin');
+    return;
+  }
   _restoreDump(data);
   _restoring=false;
   const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
@@ -1135,10 +1145,20 @@ function saveClientID(){
 }
 function _buildDump(){
   const d={};
-  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('rb_'))d[k]=localStorage.getItem(k);}
+  // Exclude auth/token keys — these are device-specific and must NOT be restored
+  const SKIP=['rb_gtok','rb_gtok_exp','rb_lsync','rb_authuser'];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('rb_')&&!SKIP.includes(k))d[k]=localStorage.getItem(k);
+  }
   return d;
 }
-function _restoreDump(d){Object.entries(d).forEach(([k,v])=>{if(k.startsWith('rb_'))localStorage.setItem(k,v);});}
+function _restoreDump(d){
+  const SKIP=['rb_gtok','rb_gtok_exp','rb_lsync','rb_authuser'];
+  Object.entries(d).forEach(([k,v])=>{
+    if(k.startsWith('rb_')&&!SKIP.includes(k))localStorage.setItem(k,v);
+  });
+}
 
 /* ════════════════════════════════════════════════
    APP DATA
