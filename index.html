@@ -751,15 +751,19 @@ function initAuth(){
         _showApp();
         setTimeout(function(){
           _applyConnected();
-          // If localStorage is empty, restore from Drive
           const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
           if(!hasData){
             _syncUI('spin','Restoring your data from Drive…');
-            _restoreFromDrive().then(function(){renderDashboard();updateAlertBadge();toast('✓ Data restored from Drive','ok');}).catch(function(){forceSyncNow();});
+            _restoreFromDrive().then(function(){
+              renderDashboard();updateAlertBadge();
+              toast('✓ Data restored from Drive','ok');
+            }).catch(function(){
+              _syncUI('on','Drive connected');
+            });
           } else {
             forceSyncNow();
+            toast('Drive connected ✓','ok');
           }
-          toast('Drive connected ✓','ok');
         }, 600);
       } else {
         _showApp();
@@ -843,10 +847,8 @@ function _oauthRedirect(mode, prompt, loginHint){
   var state = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   lsRaw('_rb_ostate', state);
   lsRaw('_rb_reconnect', mode);
-  // Login uses only email+profile. Drive connect uses full scope.
-  var scope = (mode === 'drive')
-    ? 'email profile https://www.googleapis.com/auth/drive.appdata'
-    : 'email profile';
+  // Request all scopes in one shot — avoids Android double-redirect conflict
+  var scope = 'email profile https://www.googleapis.com/auth/drive.appdata';
   var params = {
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -877,13 +879,31 @@ async function _processToken(token){
     }
     _authUser = {name: info.name||info.email, email: info.email, picture: info.picture||''};
     lsRaw('rb_authuser', JSON.stringify(_authUser));
-    // Login token has email+profile scope only — now get Drive scope separately
-    // This avoids the Android "account already exists on device" error
+    // Token already has drive.appdata scope from single OAuth call
+    lsRaw('rb_gtok', token);
+    lsRaw('rb_gtok_exp', String(Date.now() + 3500000));
+    _gTok = token;
     _showApp();
     setTimeout(function(){
-      _syncUI('spin','Connecting Drive backup…');
-      _oauthRedirect('drive', 'none', info.email);
-    }, 900);
+      _applyConnected();
+      // After login, always try to restore from Drive first
+      // This handles the case where cache was cleared
+      const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+      if(!hasData){
+        _syncUI('spin','Restoring your data from Drive…');
+        _restoreFromDrive().then(function(){
+          renderDashboard();updateAlertBadge();
+          toast('✓ Data restored from Drive','ok');
+          setTimeout(forceSyncNow,2000); // sync AFTER restore done
+        }).catch(function(){
+          _restoring=false;
+          _syncUI('on','Drive connected');
+          toast('Drive connected – enter your data to begin','info');
+        });
+      } else {
+        forceSyncNow();
+      }
+    }, 800);
   }catch(e){
     _showLoginScreen('Network error. Check connection and try again.');
   }
@@ -949,7 +969,7 @@ function doSignOut(){
    GOOGLE DRIVE ENGINE — pure fetch, no gapi/GIS scripts
    ════════════════════════════════════════════════ */
 const GD={FILE:'rentbook-pro-data.json'};
-let _gTok=null,_gFid=null,_syncTimer=null,_syncLock=false;
+let _gTok=null,_gFid=null,_syncTimer=null,_syncLock=false,_restoring=false;
 
 function _isTokenExpired(){
   const exp=lsRaw('rb_gtok_exp');
@@ -988,16 +1008,28 @@ async function handleSyncBtn(){
   var sact=document.getElementById('sact');
   if(sact){sact.textContent='Connecting…';sact.disabled=true;}
   _syncUI('spin','Connecting to Drive…');
-  _oauthRedirect('drive','none',(_authUser&&_authUser.email)||'');
+  _oauthRedirect('reconnect','none',(_authUser&&_authUser.email)||'');
 }
 // Legacy stubs
 async function loadGScripts(){}
 async function _initGIS(){}
-async function _schedSync(){clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
+async function _schedSync(){if(_restoring)return;clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
 async function forceSyncNow(){
   if(!_gTok)return;
+  if(_restoring)return; // don't overwrite Drive while restoring
   if(_isTokenExpired()){lsRaw('rb_gtok',null);lsRaw('rb_gtok_exp',null);_gTok=null;_gFid=null;_syncUI('err','Session expired – tap Reconnect');const sa=document.getElementById('sact');if(sa)sa.textContent='Reconnect';return;}
   if(_syncLock)return;
+  // SAFETY: never upload empty data — restore instead
+  const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+  if(!hasData){
+    _syncUI('spin','Restoring your data from Drive…');
+    try{
+      await _restoreFromDrive();
+      renderDashboard();updateAlertBadge();
+      toast('✓ Data restored from Drive','ok');
+    }catch(e){_syncUI('err','Restore failed – check connection');}
+    return;
+  }
   _syncLock=true;
   _syncUI('spin','Syncing…');
   try{
@@ -1039,14 +1071,17 @@ async function _findOrCreate(){
 
 async function _restoreFromDrive(){
   if(!_gTok)return;
+  _restoring=true;
+  clearTimeout(_syncTimer);
   // Find the backup file
   const listRes=await fetch(
     'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent("name='"+GD.FILE+"'")+'&fields=files(id)',
     {headers:{Authorization:'Bearer '+_gTok}}
   );
-  if(listRes.status===401){lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
+  if(listRes.status===401){_restoring=false;lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
   const listJson=await listRes.json();
   if(!listJson.files||!listJson.files.length){
+    _restoring=false;
     _syncUI('on','Connected – no backup found yet');
     return; // no backup file exists yet — fresh setup
   }
@@ -1055,9 +1090,10 @@ async function _restoreFromDrive(){
     'https://www.googleapis.com/drive/v3/files/'+_gFid+'?alt=media',
     {headers:{Authorization:'Bearer '+_gTok}}
   );
-  if(dlRes.status===401){lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
+  if(dlRes.status===401){_restoring=false;lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
   const data=await dlRes.json();
   _restoreDump(data);
+  _restoring=false;
   const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
   lsRaw('rb_lsync',ts);
   _syncUI('on','Restored from Drive · '+ts);
