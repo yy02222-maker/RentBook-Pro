@@ -757,6 +757,7 @@ function initAuth(){
         setTimeout(function(){
           _applyConnected();
           const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+          _log('reconnect: hasData='+hasData);
           if(!hasData){
             _syncUI('spin','Restoring your data from Drive…');
             _restoreFromDrive().then(function(){
@@ -894,7 +895,9 @@ async function _processToken(token){
       _applyConnected();
       // After login, always try to restore from Drive first
       // This handles the case where cache was cleared
+      // Only rb_rooms/settings written by user count — defaults are never written now
       const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+      _log('processToken: hasData='+hasData);
       if(!hasData){
         _syncUI('spin','Restoring your data from Drive…');
         _restoreFromDrive().then(function(){
@@ -999,8 +1002,9 @@ function _driveInit(){
     _gTok=tok;
     _applyConnected();
     // If localStorage has no app data (e.g. cache was cleared), restore from Drive
+    // rb_rooms only exists if user actually saved data (getRooms no longer auto-writes defaults)
     const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
-    _log('driveInit: hasData='+hasData+' rooms='+localStorage.getItem('rb_rooms')?.slice(0,30));
+    _log('driveInit: hasData='+hasData+' rb_rooms='+(localStorage.getItem('rb_rooms')!==null)+' rb_settings='+(localStorage.getItem('rb_settings')!==null));
     if(!hasData){
       _syncUI('spin','Restoring your data from Drive…');
       _restoreFromDrive().then(function(){
@@ -1039,8 +1043,9 @@ async function forceSyncNow(){
   if(_restoring)return; // don't overwrite Drive while restoring
   if(_isTokenExpired()){lsRaw('rb_gtok',null);lsRaw('rb_gtok_exp',null);_gTok=null;_gFid=null;_syncUI('err','Session expired – tap Reconnect');const sa=document.getElementById('sact');if(sa)sa.textContent='Reconnect';return;}
   if(_syncLock)return;
-  // SAFETY: never upload empty data — restore instead
+  // SAFETY: never upload if no real user data exists — restore instead
   const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+  _log('forceSyncNow: hasData='+hasData);
   if(!hasData){
     _syncUI('spin','Restoring your data from Drive…');
     try{
@@ -1221,8 +1226,9 @@ function saveSetting(k,v){
 function getRooms(){
   let r=gd('rb_rooms',null);
   if(!r){
+    // Return defaults in memory — do NOT write to localStorage
+    // Writing here causes hasData=true which blocks Drive restore
     r=DROOMS.map(x=>({...x,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''}));
-    sd('rb_rooms',r);
   }
   return r.map(x=>({lastMeterReading:0,tenantName:'',tenantPhone:'',deposit:0,moveInDate:'',...x,id:Number(x.id)}));
 }
@@ -2012,8 +2018,7 @@ function init(){
   updML();
   const s=getSettings();
   document.getElementById('brandProp').textContent=s.propertyName||'My Property';
-  getRooms();
-  renderDashboard();
+  renderDashboard(); // getRooms() called inside renderDashboard safely
   updateAlertBadge();
   _syncUI('','Not connected');
   const ls=lsRaw('rb_lsync');
