@@ -588,7 +588,7 @@ select.sinput option{background:var(--s2);}
     <div id="rcptBody"></div>
     <div class="mact">
       <button class="btn btn-gh" onclick="closeOv('ovReceipt')">Close</button>
-      <button class="btn btn-wa" onclick="sendReceiptWA()">📲 WhatsApp</button>
+      <button class="btn btn-wa" onclick="sendReceiptWA()" id="waReceiptBtn">📲 Send on WhatsApp</button>
     </div>
   </div>
 </div>
@@ -1356,16 +1356,17 @@ function sendWABill(rid){
   if(!bill){toast('Save bill first','err');return;}
   if(!room||!room.tenantPhone){toast('No phone number saved','err');return;}
   const er=parseFloat(settings.elecRate)||8;
-  const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n━━━━━━━━━━━━━━\n📋 *Rent Bill – '+MONTHS[curM]+' '+curY+'*\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\n━━━━━━━━━━━━━━\n⚡ Electricity\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━\n💰 *Total: ₹'+fmt(bill.total)+'*\n📅 Due: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n━━━━━━━━━━━━━━\nKindly pay by due date. 🙏';
-  window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  const _pM=curM===0?11:curM-1,_pY=curM===0?curY-1:curY;
+  const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n━━━━━━━━━━━━━━\n📋 *Rent Bill – '+MONTHS[_pM]+' '+_pY+'*\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\n━━━━━━━━━━━━━━\n⚡ Electricity\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━\n💰 *Total: ₹'+fmt(bill.total)+'*\n📅 Due: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n━━━━━━━━━━━━━━\nKindly pay by due date. 🙏';
+  const _a=document.createElement('a');_a.href='https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);_a.target='_blank';_a.rel='noopener';document.body.appendChild(_a);_a.click();setTimeout(function(){document.body.removeChild(_a);},300);
 }
 function sendWAReminder(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
   if(!room||!room.tenantPhone){toast('No phone number','err');return;}
   const bill=getRoomBill(curY,curM,rid);
   const amt=bill?bill.total:room.rent;
-  const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n\nDear '+room.tenantName+',\n\nFriendly reminder: Your rent for *'+MONTHS[curM]+' '+curY+'* is due.\n\nRoom: '+room.id+' | Amount: ₹'+fmt(amt)+'\nDue Date: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n\nPlease pay at the earliest. Thank you! 🙏';
-  window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n\nDear '+room.tenantName+',\n\nFriendly reminder: Your rent for *'+MONTHS[_rM]+' '+_rY+'* is due.\n\nRoom: '+room.id+' | Amount: ₹'+fmt(amt)+'\nDue Date: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n\nPlease pay at the earliest. Thank you! 🙏';
+  const _a=document.createElement('a');_a.href='https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);_a.target='_blank';_a.rel='noopener';document.body.appendChild(_a);_a.click();setTimeout(function(){document.body.removeChild(_a);},300);
 }
 
 /* ── RECEIPT ── */
@@ -1373,19 +1374,21 @@ function openReceipt(rid){
   const rooms=getRooms(),settings=getSettings(),room=rooms.find(r=>r.id===rid);
   const bill=getRoomBill(curY,curM,rid);
   if(!bill){toast('Save bill first to generate receipt','err');return;}
-  _rcptData={room,bill,settings,month:MONTHS[curM],year:curY};
-  document.getElementById('rcptSub').textContent='Room '+room.id+' – '+MONTHS[curM]+' '+curY;
+  const pM=curM===0?11:curM-1,pY=curM===0?curY-1:curY;
+  _rcptData={room,bill,settings,month:MONTHS[curM],year:curY,periodMonth:MONTHS[pM],periodYear:pY};
+  document.getElementById('rcptSub').textContent='Room '+room.id+' – '+MONTHS[pM]+' '+pY+' (paid '+MONTHS[curM]+')';
   document.getElementById('rcptBody').innerHTML=buildReceipt(_rcptData);
   openOv('ovReceipt');
 }
 function buildReceipt(d){
-  const {room,bill,settings,month,year}=d;
+  const {room,bill,settings,month,year,periodMonth,periodYear}=d;
+  const pLabel=(periodMonth||month)+' '+(periodYear||year);
   const er=parseFloat(settings.elecRate)||8,rcNo=bill.receiptNo||'DRAFT';
   return `<div class="receipt">
     <div class="rhead">
       <div class="rhprop">${escH(settings.propertyName||'My Property')}</div>
       <div class="rhtit">Rent Receipt</div>
-      <div class="rhsub">${month} ${year}</div>
+      <div class="rhsub">${pLabel}</div>
     </div>
     <div class="rbody">
       <div class="rr"><span class="rrl">Receipt No.</span><span class="rrv">#${rcNo}</span></div>
@@ -1393,7 +1396,8 @@ function buildReceipt(d){
       <div class="rr"><span class="rrl">Room</span><span class="rrv">Room ${room.id} · ${room.floor} Floor</span></div>
       <div class="rr"><span class="rrl">Tenant</span><span class="rrv">${escH(room.tenantName)}</span></div>
       ${room.tenantPhone?'<div class="rr"><span class="rrl">Mobile</span><span class="rrv">'+room.tenantPhone+'</span></div>':''}
-      <div class="rr"><span class="rrl">Period</span><span class="rrv">${month} ${year}</span></div>
+      <div class="rr"><span class="rrl">Period</span><span class="rrv">${pLabel}</span></div>
+      <div class="rr"><span class="rrl">Paid In</span><span class="rrv">${month} ${year}</span></div>
       <div class="rr"><span class="rrl">Prev Reading</span><span class="rrv">${bill.prevReading} units</span></div>
       <div class="rr"><span class="rrl">Curr Reading</span><span class="rrv">${bill.currReading} units</span></div>
       <div class="rr"><span class="rrl">Units Used</span><span class="rrv">${bill.units} units</span></div>
@@ -1412,11 +1416,18 @@ function buildReceipt(d){
 }
 function sendReceiptWA(){
   if(!_rcptData){toast('No receipt loaded','err');return;}
-  const {room,bill,settings,month,year}=_rcptData;
+  const {room,bill,settings,month,year,periodMonth,periodYear}=_rcptData;
+  const _rcpLabel=(periodMonth||month)+' '+(periodYear||year);
   if(!room.tenantPhone){toast('No phone number for this tenant','err');return;}
   const er=parseFloat(settings.elecRate)||8,rcNo=bill.receiptNo||'DRAFT';
-  const msg='🏠 *'+(settings.propertyName||'My Property')+'*\n━━━━━━━━━━━━━━━\n🧾 *RENT RECEIPT #'+rcNo+'*\n━━━━━━━━━━━━━━━\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\nPeriod: '+month+' '+year+'\nDate: '+fmtD(bill.savedAt)+'\n━━━━━━━━━━━━━━━\n⚡ *Electricity*\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━━\n💰 *TOTAL: ₹'+fmt(bill.total)+'*\nStatus: '+(bill.paid?'✅ PAID':'⏳ PENDING')+'\n━━━━━━━━━━━━━━━\n'+(settings.landlordName?'Landlord: '+settings.landlordName+'\n':'')+(settings.landlordPhone?'Phone: '+settings.landlordPhone+'\n':'')+'Thank you! 🙏';
-  window.open('https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+  const msg='🏠 *'+(settings.propertyName||'My Property')+'*\n━━━━━━━━━━━━━━━\n🧾 *RENT RECEIPT #'+rcNo+'*\n━━━━━━━━━━━━━━━\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\nPeriod: '+_rcpLabel+'\nDate: '+fmtD(bill.savedAt)+'\n━━━━━━━━━━━━━━━\n⚡ *Electricity*\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━━\n💰 *TOTAL: ₹'+fmt(bill.total)+'*\nStatus: '+(bill.paid?'✅ PAID':'⏳ PENDING')+'\n━━━━━━━━━━━━━━━\n'+(settings.landlordName?'Landlord: '+settings.landlordName+'\n':'')+(settings.landlordPhone?'Phone: '+settings.landlordPhone+'\n':'')+'Thank you! 🙏';
+  const phone='91'+room.tenantPhone.replace(/\D/g,'');
+  const url='https://wa.me/'+phone+'?text='+encodeURIComponent(msg);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);},300);
+  toast('Opening WhatsApp…','info');
 }
 
 /* ── TENANT MODAL ── */
