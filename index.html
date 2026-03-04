@@ -586,9 +586,9 @@ select.sinput option{background:var(--s2);}
     <div class="mtit">Payment Receipt</div>
     <div class="msub" id="rcptSub">—</div>
     <div id="rcptBody"></div>
-    <div class="mact">
-      <button class="btn btn-gh" onclick="closeOv('ovReceipt')">Close</button>
-      <button class="btn btn-wa" onclick="sendReceiptWA()" id="waReceiptBtn">📲 Send on WhatsApp</button>
+    <div class="g2" style="margin-top:12px;">
+      <button class="btn btn-gh" onclick="closeOv('ovReceipt')">✕ Close</button>
+      <button class="btn btn-wa" onclick="shareReceiptImage()" id="shareReceiptBtn">📸 Share Receipt</button>
     </div>
   </div>
 </div>
@@ -676,6 +676,7 @@ select.sinput option{background:var(--s2);}
 </div><!-- /appRoot -->
 
 <!-- Google Identity Services -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 
 
 <script>
@@ -739,8 +740,8 @@ function initAuth(){
       return;
     }
 
-    if(mode === 'reconnect'){
-      // Reconnect path — session already exists, just refreshing Drive token
+    if(mode === 'reconnect' || mode === 'drive'){
+      // Drive token path — session already exists, just getting Drive token
       const raw = lsRaw('rb_authuser');
       if(raw){ try{ _authUser = JSON.parse(raw); }catch(e){} }
       if(token){
@@ -748,11 +749,22 @@ function initAuth(){
         lsRaw('rb_gtok_exp', String(Date.now() + 3500000));
         _gTok = token;
         _showApp();
-        setTimeout(function(){ _applyConnected(); forceSyncNow(); toast('Drive connected!','ok'); }, 600);
+        setTimeout(function(){
+          _applyConnected();
+          // If localStorage is empty, restore from Drive
+          const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+          if(!hasData){
+            _syncUI('spin','Restoring your data from Drive…');
+            _restoreFromDrive().then(function(){renderDashboard();updateAlertBadge();toast('✓ Data restored from Drive','ok');}).catch(function(){forceSyncNow();});
+          } else {
+            forceSyncNow();
+          }
+          toast('Drive connected ✓','ok');
+        }, 600);
       } else {
         _showApp();
         setTimeout(function(){
-          _syncUI('err','Drive connect failed — tap to retry');
+          _syncUI('err','Drive not connected — tap Connect Drive');
           var sact=document.getElementById('sact');
           if(sact){sact.textContent='Connect Drive';sact.disabled=false;}
         }, 400);
@@ -762,7 +774,10 @@ function initAuth(){
 
     // Fresh login path
     if(!token){
-      _showLoginScreen(error ? 'Sign-in error: '+error : 'Sign-in failed. Please try again.');
+      var errMsg = 'Sign-in failed. Tap "Continue with Google" to try again.';
+      if(error==='access_denied') errMsg = 'Sign-in was cancelled or blocked. Please tap "Continue with Google" again.';
+      else if(error) errMsg = 'Google error: '+error+'. Please try again.';
+      _showLoginScreen(errMsg);
       return;
     }
     _showLoginScreen('');
@@ -788,7 +803,8 @@ function _showLoginScreen(err){
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginSpinner').classList.remove('show');
   document.getElementById('g-signin-btn').style.display = 'flex';
-  if(err) document.getElementById('loginErr').textContent = err;
+  document.getElementById('loginErr').textContent = err||'';
+  document.getElementById('pinErr').textContent = '';
   var hintEl = document.getElementById('redirectUriHint');
   if(hintEl){
     var uri = window.location.origin + window.location.pathname;
@@ -798,7 +814,7 @@ function _showLoginScreen(err){
 
 function checkPin(){
   // PIN fallback — set your 4-6 digit PIN below
-  const OWNER_PIN = '2222'; // ← PIN for quick access (backup if Google login fails)
+  const OWNER_PIN = '1234'; // ← PIN for quick access (backup if Google login fails)
   const val = (document.getElementById('pinInput').value||'').trim();
   if(!val){ document.getElementById('pinErr').textContent='Enter your PIN.'; return; }
   if(val !== OWNER_PIN){
@@ -827,13 +843,16 @@ function _oauthRedirect(mode, prompt, loginHint){
   var state = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   lsRaw('_rb_ostate', state);
   lsRaw('_rb_reconnect', mode);
+  // Login uses only email+profile. Drive connect uses full scope.
+  var scope = (mode === 'drive')
+    ? 'email profile https://www.googleapis.com/auth/drive.appdata'
+    : 'email profile';
   var params = {
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
     response_type: 'token',
-    scope: 'email profile https://www.googleapis.com/auth/drive.appdata',
+    scope: scope,
     state: state,
-    include_granted_scopes: 'true',
   };
   if(prompt) params.prompt = prompt;
   if(loginHint) params.login_hint = loginHint;
@@ -858,12 +877,13 @@ async function _processToken(token){
     }
     _authUser = {name: info.name||info.email, email: info.email, picture: info.picture||''};
     lsRaw('rb_authuser', JSON.stringify(_authUser));
-    lsRaw('rb_gtok', token);
-    lsRaw('rb_gtok_exp', String(Date.now() + 3500000)); // ~58 min expiry
-    _gTok = token;
+    // Login token has email+profile scope only — now get Drive scope separately
+    // This avoids the Android "account already exists on device" error
     _showApp();
-    // Drive auto-connects since token is already saved
-    setTimeout(function(){ _applyConnected(); forceSyncNow(); }, 800);
+    setTimeout(function(){
+      _syncUI('spin','Connecting Drive backup…');
+      _oauthRedirect('drive', 'none', info.email);
+    }, 900);
   }catch(e){
     _showLoginScreen('Network error. Check connection and try again.');
   }
@@ -964,11 +984,11 @@ function _applyConnected(){
 }
 async function handleSyncBtn(){
   if(_gTok){forceSyncNow();return;}
-  // No token — reconnect via OAuth (silent, no password prompt)
+  // No Drive token — get drive scope (user already logged in)
   var sact=document.getElementById('sact');
   if(sact){sact.textContent='Connecting…';sact.disabled=true;}
-  _syncUI('spin','Connecting…');
-  _oauthRedirect('reconnect','none',(_authUser&&_authUser.email)||'');
+  _syncUI('spin','Connecting to Drive…');
+  _oauthRedirect('drive','none',(_authUser&&_authUser.email)||'');
 }
 // Legacy stubs
 async function loadGScripts(){}
@@ -1396,6 +1416,23 @@ function togglePaid(rid){
 }
 
 /* ── WHATSAPP ── */
+/* ── WhatsApp opener — works on Android Chrome + WebView ── */
+function _openWA(phone, msg){
+  toast('Opening WhatsApp…','info');
+  var url='https://wa.me/'+phone+'?text='+encodeURIComponent(msg);
+  // Method 1: window.location for in-browser (most reliable on Android)
+  var a=document.createElement('a');
+  a.href=url;
+  a.target='_blank';
+  a.rel='noopener noreferrer';
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    if(document.body.contains(a))document.body.removeChild(a);
+  },500);
+}
+
 function sendWABill(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
   const bill=getRoomBill(curY,curM,rid);
@@ -1404,7 +1441,7 @@ function sendWABill(rid){
   const er=parseFloat(settings.elecRate)||8;
   const _pM=curM===0?11:curM-1,_pY=curM===0?curY-1:curY;
   const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n━━━━━━━━━━━━━━\n📋 *Rent Bill – '+MONTHS[_pM]+' '+_pY+'*\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\n━━━━━━━━━━━━━━\n⚡ Electricity\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━\n💰 *Total: ₹'+fmt(bill.total)+'*\n📅 Due: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n━━━━━━━━━━━━━━\nKindly pay by due date. 🙏';
-  const _a=document.createElement('a');_a.href='https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);_a.target='_blank';_a.rel='noopener';document.body.appendChild(_a);_a.click();setTimeout(function(){document.body.removeChild(_a);},300);
+  _openWA('91'+room.tenantPhone.replace(/\D/g,''), msg);
 }
 function sendWAReminder(rid){
   const settings=getSettings(),rooms=getRooms(),room=rooms.find(r=>r.id===rid);
@@ -1413,7 +1450,7 @@ function sendWAReminder(rid){
   const amt=bill?bill.total:room.rent;
   const _rM=curM===0?11:curM-1,_rY=curM===0?curY-1:curY;
   const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n\nDear '+room.tenantName+',\n\nFriendly reminder: Your rent for *'+MONTHS[_rM]+' '+_rY+'* is due.\n\nRoom: '+room.id+' | Amount: ₹'+fmt(amt)+'\nDue Date: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n\nPlease pay at the earliest. Thank you! 🙏';
-  const _a=document.createElement('a');_a.href='https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);_a.target='_blank';_a.rel='noopener';document.body.appendChild(_a);_a.click();setTimeout(function(){document.body.removeChild(_a);},300);
+  _openWA('91'+room.tenantPhone.replace(/\D/g,''), msg);
 }
 
 /* ── RECEIPT ── */
@@ -1471,12 +1508,74 @@ function sendReceiptWA(){
   const er=parseFloat(settings.elecRate)||8,rcNo=bill.receiptNo||'DRAFT';
   const msg='🏠 *'+(settings.propertyName||'My Property')+'*\n━━━━━━━━━━━━━━━\n🧾 *RENT RECEIPT #'+rcNo+'*\n━━━━━━━━━━━━━━━\nRoom: '+room.id+' · '+room.floor+' Floor\nTenant: '+room.tenantName+'\nPeriod: '+_rcpLabel+'\nDate: '+fmtD(bill.savedAt)+'\n━━━━━━━━━━━━━━━\n⚡ *Electricity*\n  Prev: '+bill.prevReading+' · Curr: '+bill.currReading+'\n  Units: '+bill.units+' × ₹'+er+' = ₹'+fmt(bill.electricity)+'\n🏠 Rent: ₹'+fmt(bill.rent)+'\n━━━━━━━━━━━━━━━\n💰 *TOTAL: ₹'+fmt(bill.total)+'*\nStatus: '+(bill.paid?'✅ PAID':'⏳ PENDING')+'\n━━━━━━━━━━━━━━━\n'+(settings.landlordName?'Landlord: '+settings.landlordName+'\n':'')+(settings.landlordPhone?'Phone: '+settings.landlordPhone+'\n':'')+'Thank you! 🙏';
   const phone='91'+room.tenantPhone.replace(/\D/g,'');
-  const url='https://wa.me/'+phone+'?text='+encodeURIComponent(msg);
+  closeOv('ovReceipt');
+  setTimeout(function(){ _openWA(phone, msg); }, 350);
+}
+
+/* ── SHARE RECEIPT AS IMAGE ── */
+function shareReceiptImage(){
+  const el=document.getElementById('rcptBody');
+  if(!el){toast('No receipt to share','err');return;}
+  if(typeof html2canvas==='undefined'){toast('Image library not loaded yet','err');return;}
+
+  const btn=document.getElementById('shareReceiptBtn');
+  if(btn){btn.textContent='⏳ Generating…';btn.disabled=true;}
+
+  // Temporarily expand modal for full capture
+  const modal=el.closest('.modal');
+  const prevOverflow=modal?modal.style.overflow:'';
+  const prevMaxH=modal?modal.style.maxHeight:'';
+  if(modal){modal.style.overflow='visible';modal.style.maxHeight='none';}
+
+  html2canvas(el,{
+    scale:2,
+    useCORS:true,
+    backgroundColor:'#ffffff',
+    logging:false,
+    windowWidth:el.scrollWidth,
+    windowHeight:el.scrollHeight
+  }).then(function(canvas){
+    // Restore modal
+    if(modal){modal.style.overflow=prevOverflow;modal.style.maxHeight=prevMaxH;}
+    if(btn){btn.textContent='📸 Share Receipt';btn.disabled=false;}
+
+    canvas.toBlob(function(blob){
+      if(!blob){toast('Could not generate image','err');return;}
+      const settings=getSettings();
+      const fileName='Receipt_Room'+((_rcptData&&_rcptData.room)?_rcptData.room.id:'')+'_'+((_rcptData&&_rcptData.periodMonth)?_rcptData.periodMonth.slice(0,3):'')+'_'+((_rcptData&&_rcptData.periodYear)||new Date().getFullYear())+'.png';
+
+      // Use Web Share API if available (Android share sheet)
+      if(navigator.share && navigator.canShare){
+        const file=new File([blob], fileName, {type:'image/png'});
+        if(navigator.canShare({files:[file]})){
+          navigator.share({
+            title:'Rent Receipt – '+((_rcptData&&_rcptData.room)?'Room '+_rcptData.room.id:''),
+            text:'Please find your rent receipt attached.',
+            files:[file]
+          }).catch(function(e){
+            if(e.name!=='AbortError') _fallbackDownload(blob, fileName);
+          });
+          return;
+        }
+      }
+      // Fallback: download the image
+      _fallbackDownload(blob, fileName);
+    }, 'image/png');
+  }).catch(function(e){
+    if(modal){modal.style.overflow=prevOverflow;modal.style.maxHeight=prevMaxH;}
+    if(btn){btn.textContent='📸 Share Receipt';btn.disabled=false;}
+    toast('Failed to generate image','err');
+    console.error('html2canvas error:',e);
+  });
+}
+
+function _fallbackDownload(blob, fileName){
+  const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';
+  a.href=url;a.download=fileName;
   document.body.appendChild(a);a.click();
-  setTimeout(function(){document.body.removeChild(a);},300);
-  toast('Opening WhatsApp…','info');
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},500);
+  toast('Receipt saved to Downloads ✓','ok');
 }
 
 /* ── TENANT MODAL ── */
