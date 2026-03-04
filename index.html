@@ -541,7 +541,7 @@ select.sinput option{background:var(--s2);}
       <div class="srow"><div><div class="srl">Export Backup</div><div class="srs">Download as JSON</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="exportData()">Export</button></div>
       <div class="srow"><div><div class="srl">Import Backup</div><div class="srs">Restore from JSON</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="document.getElementById('impFile').click()">Import</button><input type="file" id="impFile" accept=".json" style="display:none;" onchange="importData(this)"/></div>
     </div>
-    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.62rem;line-height:1.8;">RentBook Pro v4.2 · Zero cost · Offline first · No server</div>
+    <div style="text-align:center;padding:16px;color:var(--muted);font-size:.62rem;line-height:1.8;">RentBook Pro v5.0 · Zero cost · Offline first · No server</div>
   </div>
 </div>
 
@@ -745,6 +745,7 @@ function initAuth(){
       if(raw){ try{ _authUser = JSON.parse(raw); }catch(e){} }
       if(token){
         lsRaw('rb_gtok', token);
+        lsRaw('rb_gtok_exp', String(Date.now() + 3500000));
         _gTok = token;
         _showApp();
         setTimeout(function(){ _applyConnected(); forceSyncNow(); toast('Drive connected!','ok'); }, 600);
@@ -797,7 +798,7 @@ function _showLoginScreen(err){
 
 function checkPin(){
   // PIN fallback — set your 4-6 digit PIN below
-  const OWNER_PIN = '1234'; // ← CHANGE THIS to your own PIN
+  const OWNER_PIN = '2222'; // ← PIN for quick access (backup if Google login fails)
   const val = (document.getElementById('pinInput').value||'').trim();
   if(!val){ document.getElementById('pinErr').textContent='Enter your PIN.'; return; }
   if(val !== OWNER_PIN){
@@ -858,6 +859,7 @@ async function _processToken(token){
     _authUser = {name: info.name||info.email, email: info.email, picture: info.picture||''};
     lsRaw('rb_authuser', JSON.stringify(_authUser));
     lsRaw('rb_gtok', token);
+    lsRaw('rb_gtok_exp', String(Date.now() + 3500000)); // ~58 min expiry
     _gTok = token;
     _showApp();
     // Drive auto-connects since token is already saved
@@ -929,10 +931,29 @@ function doSignOut(){
 const GD={FILE:'rentbook-pro-data.json'};
 let _gTok=null,_gFid=null,_syncTimer=null,_syncLock=false;
 
+function _isTokenExpired(){
+  const exp=lsRaw('rb_gtok_exp');
+  if(!exp)return false; // no expiry tracked — assume valid
+  return Date.now() > parseInt(exp);
+}
 function _driveInit(){
   const tok=lsRaw('rb_gtok');
-  if(tok){_gTok=tok;_applyConnected();}
-  else{_syncUI('','Not connected');_renderDriveW(false);}
+  if(tok){
+    _gTok=tok;
+    _applyConnected();
+    // If localStorage has no app data (e.g. cache was cleared), restore from Drive
+    const hasData=localStorage.getItem('rb_rooms')!==null||localStorage.getItem('rb_settings')!==null;
+    if(!hasData){
+      _syncUI('spin','Restoring your data from Drive…');
+      _restoreFromDrive().then(function(){
+        renderDashboard();updateAlertBadge();
+        toast('✓ Data restored from Google Drive','ok');
+      }).catch(function(e){
+        _syncUI('err','Restore failed – tap Sync Now');
+        console.error('Drive restore error:',e);
+      });
+    }
+  }else{_syncUI('','Not connected');_renderDriveW(false);}
 }
 function _applyConnected(){
   _syncUI('on','Backed up to Drive');
@@ -941,7 +962,7 @@ function _applyConnected(){
   _renderDriveW(true);
   _schedSync();
 }
-function handleSyncBtn(){
+async function handleSyncBtn(){
   if(_gTok){forceSyncNow();return;}
   // No token — reconnect via OAuth (silent, no password prompt)
   var sact=document.getElementById('sact');
@@ -950,11 +971,12 @@ function handleSyncBtn(){
   _oauthRedirect('reconnect','none',(_authUser&&_authUser.email)||'');
 }
 // Legacy stubs
-function loadGScripts(){}
-function _initGIS(){}
-function _schedSync(){clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
+async function loadGScripts(){}
+async function _initGIS(){}
+async function _schedSync(){clearTimeout(_syncTimer);_syncTimer=setTimeout(forceSyncNow,2200);}
 async function forceSyncNow(){
   if(!_gTok)return;
+  if(_isTokenExpired()){lsRaw('rb_gtok',null);lsRaw('rb_gtok_exp',null);_gTok=null;_gFid=null;_syncUI('err','Session expired – tap Reconnect');const sa=document.getElementById('sact');if(sa)sa.textContent='Reconnect';return;}
   if(_syncLock)return;
   _syncLock=true;
   _syncUI('spin','Syncing…');
@@ -971,7 +993,7 @@ async function forceSyncNow(){
     _syncUI('on','Backed up · '+ts);
     document.getElementById('sact').textContent='Sync Now';
   }catch(e){
-    if(String(e).includes('401')){lsRaw('rb_gtok',null);_gTok=null;_syncUI('err','Session expired – tap Reconnect');document.getElementById('sact').textContent='Reconnect';}
+    if(String(e).includes('401')){lsRaw('rb_gtok',null);_gTok=null;_gFid=null;_syncUI('err','Session expired – tap Reconnect');document.getElementById('sact').textContent='Reconnect';}
     else _syncUI('err','Sync failed – tap to retry');
   }finally{
     _syncLock=false;
@@ -993,6 +1015,32 @@ async function _findOrCreate(){
   if(createRes.status===401)throw new Error('401');
   const cj=await createRes.json();
   return cj.id;
+}
+
+async function _restoreFromDrive(){
+  if(!_gTok)return;
+  // Find the backup file
+  const listRes=await fetch(
+    'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent("name='"+GD.FILE+"'")+'&fields=files(id)',
+    {headers:{Authorization:'Bearer '+_gTok}}
+  );
+  if(listRes.status===401){lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
+  const listJson=await listRes.json();
+  if(!listJson.files||!listJson.files.length){
+    _syncUI('on','Connected – no backup found yet');
+    return; // no backup file exists yet — fresh setup
+  }
+  _gFid=listJson.files[0].id;
+  const dlRes=await fetch(
+    'https://www.googleapis.com/drive/v3/files/'+_gFid+'?alt=media',
+    {headers:{Authorization:'Bearer '+_gTok}}
+  );
+  if(dlRes.status===401){lsRaw('rb_gtok',null);_gTok=null;throw new Error('401');}
+  const data=await dlRes.json();
+  _restoreDump(data);
+  const ts=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  lsRaw('rb_lsync',ts);
+  _syncUI('on','Restored from Drive · '+ts);
 }
 function _syncUI(state,txt){
   const d=document.getElementById('sdot');if(d)d.className='sdot'+(state?' '+state:'');
@@ -1027,9 +1075,7 @@ function saveClientID(){
   } else { errEl.textContent=''; }
   const s=getSettings();s.googleClientId=id;sd('rb_settings',s);
   closeOv('ovClientID');
-  _initGIS(id);loadGScripts(id);
-  toast('Client ID saved. Connecting…','info');
-  setTimeout(()=>{if(_tc)_tc.requestAccessToken({prompt:'consent'});},1800);
+  toast('Client ID saved ✓ — use Connect Drive button to sync','ok');
 }
 function _buildDump(){
   const d={};
@@ -1365,6 +1411,7 @@ function sendWAReminder(rid){
   if(!room||!room.tenantPhone){toast('No phone number','err');return;}
   const bill=getRoomBill(curY,curM,rid);
   const amt=bill?bill.total:room.rent;
+  const _rM=curM===0?11:curM-1,_rY=curM===0?curY-1:curY;
   const msg='🏠 *'+(settings.propertyName||'Landlord')+'*\n\nDear '+room.tenantName+',\n\nFriendly reminder: Your rent for *'+MONTHS[_rM]+' '+_rY+'* is due.\n\nRoom: '+room.id+' | Amount: ₹'+fmt(amt)+'\nDue Date: '+room.due+sfx(room.due)+' '+MONTHS[curM]+'\n\nPlease pay at the earliest. Thank you! 🙏';
   const _a=document.createElement('a');_a.href='https://wa.me/91'+room.tenantPhone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);_a.target='_blank';_a.rel='noopener';document.body.appendChild(_a);_a.click();setTimeout(function(){document.body.removeChild(_a);},300);
 }
@@ -1375,6 +1422,8 @@ function openReceipt(rid){
   const bill=getRoomBill(curY,curM,rid);
   if(!bill){toast('Save bill first to generate receipt','err');return;}
   const pM=curM===0?11:curM-1,pY=curM===0?curY-1:curY;
+  // Assign receipt number now if not already assigned (unpaid bills get # when receipt is opened)
+  if(!bill.receiptNo){bill.receiptNo=nextRcptNo();saveRoomBill(curY,curM,room.id,bill);}
   _rcptData={room,bill,settings,month:MONTHS[curM],year:curY,periodMonth:MONTHS[pM],periodYear:pY};
   document.getElementById('rcptSub').textContent='Room '+room.id+' – '+MONTHS[pM]+' '+pY+' (paid '+MONTHS[curM]+')';
   document.getElementById('rcptBody').innerHTML=buildReceipt(_rcptData);
@@ -1477,8 +1526,17 @@ function confirmVacate(){
 
 /* ── ADD NOTE ── */
 function doAddNote(rid){
-  const n=prompt('Add note for Room '+rid+':');
-  if(n&&n.trim()){addNote(rid,n.trim());toast('Note added ✓','ok');renderDashboard();}
+  document.getElementById('cfmIco').textContent='\u{1F4DD}';
+  document.getElementById('cfmTit').textContent='Add Note – Room '+rid;
+  document.getElementById('cfmMsg').innerHTML='<textarea id="inlineNote" rows="3" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;border:1px solid #223350;background:#0b1220;color:#eaeff7;font-size:.8rem;resize:none;" placeholder="Enter note..."></textarea>';
+  const okBtn=document.getElementById('cfmOkBtn');
+  okBtn.textContent='Save Note';okBtn.className='btn btn-acc';
+  _cfmCb=function(){
+    const el=document.getElementById('inlineNote');
+    const n=el?el.value.trim():'';
+    if(n){addNote(rid,n);toast('Note added ✓','ok');openPanels.add(rid);renderDashboard();}
+  };
+  document.getElementById('cfmOv').classList.add('open');
 }
 
 /* ── ALERTS ── */
@@ -1530,7 +1588,7 @@ function jumpToRoom(rid){
   renderDashboard();
   setTimeout(function(){
     const el=document.getElementById('rc-'+rid);
-    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    if(el){const y=el.getBoundingClientRect().top+window.scrollY-110;window.scrollTo({top:y,behavior:'smooth'});}
   },120);
 }
 
@@ -1648,6 +1706,7 @@ function saveRoomRent(rid,val){
   if(isNaN(v)||v<=0){toast('Invalid rent amount','err');return;}
   saveRooms(getRooms().map(r=>r.id===rid?{...r,rent:v}:r));
   toast('Rent updated ✓','ok');
+  _schedSync();
 }
 function addRoom(){
   const floor=document.getElementById('nrFloor').value;
@@ -1658,9 +1717,10 @@ function addRoom(){
   const rooms=getRooms(),maxId=Math.max(...rooms.map(r=>r.id),0);
   rooms.push({id:maxId+1,floor,rent,due,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''});
   saveRooms(rooms);
+  document.getElementById('nrFloor').value='Ground';
   document.getElementById('nrRent').value='';
   document.getElementById('nrDue').value='';
-  toast('Room added ✓','ok');renderSettings();
+  toast('Room added ✓','ok');renderSettings();renderDashboard();
 }
 
 /* ── EXPORT / IMPORT ── */
