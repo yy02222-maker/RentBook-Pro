@@ -519,6 +519,13 @@ select.sinput option{background:var(--s2);}
       <div class="srow"><div><div class="srl">Cloud Backup</div><div class="srs">Auto-saves to your Google Drive</div></div><div id="driveWidget"></div></div>
       <div class="srow" id="driveFileRow" style="display:none;"><div><div class="srl">Backup File</div><div class="srs">rentbook-pro-data.json</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="forceSyncNow()">Sync Now</button></div>
       <div class="srow"><div class="srl">Last Synced</div><div class="srs" id="lastSync" style="font-size:.68rem;color:var(--muted);">Never</div></div>
+      <div class="srow"><div><div class="srl">↩️ Restore from Drive</div><div class="srs">Recover data from your last cloud backup</div></div><button class="btn btn-gh" style="width:auto;padding:5px 10px;margin:0;font-size:.68rem;" onclick="doRestoreFromDrive()">Restore</button></div>
+    </div>
+
+    <div class="scard">
+      <div class="scard-hd">↩️ Undo / Local Snapshots</div>
+      <div class="srs" style="padding:0 14px 8px;color:var(--muted);font-size:.68rem;">App automatically saves a snapshot before every major change. Tap any to restore.</div>
+      <div id="snapshotList" style="padding:0 10px 8px;"></div>
     </div>
     <div class="scard">
       <div class="scard-hd">⚙️ General</div>
@@ -1225,6 +1232,48 @@ function _buildDump(){
   }
   return d;
 }
+
+/* ── LOCAL SNAPSHOTS (undo system — keeps last 5) ── */
+const MAX_SNAPS=5;
+function _takeSnapshot(label){
+  try{
+    const dump=_buildDump();
+    const snap={ts:Date.now(),label:label||'Change',data:dump};
+    const existing=JSON.parse(localStorage.getItem('rb_snapshots')||'[]');
+    existing.unshift(snap);
+    if(existing.length>MAX_SNAPS)existing.length=MAX_SNAPS;
+    localStorage.setItem('rb_snapshots',JSON.stringify(existing));
+    _log('snapshot: saved "'+label+'" ('+existing.length+' total)');
+  }catch(e){_log('snapshot: failed '+e.message);}
+}
+function _getSnapshots(){
+  try{return JSON.parse(localStorage.getItem('rb_snapshots')||'[]');}catch(e){return [];}
+}
+function _restoreSnapshot(idx){
+  const snaps=_getSnapshots();
+  if(!snaps[idx]){toast('Snapshot not found','err');return;}
+  const snap=snaps[idx];
+  showConfirm(
+    '↩️ Restore Snapshot',
+    'Restore to: '+snap.label+'\n'+new Date(snap.ts).toLocaleString('en-IN')+'\n\nThis will replace your current data.',
+    'Restore',
+    function(){
+      // Save current state as a snapshot first
+      _takeSnapshot('Before restore');
+      // Apply the snapshot
+      const SKIP=['rb_gtok','rb_gtok_exp','rb_lsync','rb_authuser','rb_snapshots'];
+      // Clear current app data
+      const keys=[];
+      for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('rb_')&&!SKIP.includes(k))keys.push(k);}
+      keys.forEach(k=>localStorage.removeItem(k));
+      // Restore snapshot data
+      Object.entries(snap.data).forEach(([k,v])=>{if(!SKIP.includes(k))localStorage.setItem(k,v);});
+      toast('✓ Restored to: '+snap.label,'ok');
+      _log('snapshot: restored "'+snap.label+'"');
+      renderDashboard();updateAlertBadge();renderSettings();
+    }
+  );
+}
 function _restoreDump(d){
   const SKIP=['rb_gtok','rb_gtok_exp','rb_lsync','rb_authuser'];
   Object.entries(d).forEach(([k,v])=>{
@@ -1506,6 +1555,7 @@ function saveBill(rid){
   const u=curr-prev,el=Math.round(u*er),tot=room.rent+el;
   const paid=paidEl?paidEl.checked:false;
   const rec={roomId:rid,prevReading:prev,currReading:curr,units:u,electricity:el,rent:room.rent,total:tot,paid,savedAt:new Date().toISOString(),tenantName:room.tenantName,receiptNo:paid?nextRcptNo():null};
+  if(getRoomBill(curY,curM,rid)) _takeSnapshot('Before updating Room '+rid+' bill');
   saveRoomBill(curY,curM,rid,rec);
   saveRooms(rooms.map(r=>r.id===rid?{...r,lastMeterReading:curr}:r));
   if(noteEl&&noteEl.value.trim())addNote(rid,noteEl.value.trim());
@@ -1523,6 +1573,7 @@ function doResetBill(rid){
     'Reset '+MONTHS[curM]+' bill for Room '+rid+'?\n\nMeter reading will revert to '+bill.prevReading+' units.',
     'Reset',
     function(){
+      _takeSnapshot('Before resetting Room '+rid+' bill');
       const rooms=getRooms();
       // Revert lastMeterReading to what it was before this bill
       const newRooms=rooms.map(r=>r.id===rid?{...r,lastMeterReading:bill.prevReading}:r);
@@ -1657,6 +1708,49 @@ function sendReceiptWA(){
   setTimeout(function(){ _openWA(phone, msg); }, 350);
 }
 
+/* ── SNAPSHOT / UNDO / RESTORE ── */
+function _renderSnapshotList(){
+  const el=document.getElementById('snapshotList');
+  if(!el)return;
+  const snaps=_getSnapshots();
+  if(!snaps.length){
+    el.innerHTML='<div style="font-size:.68rem;color:var(--muted);padding:4px 4px 8px;">No snapshots yet — they appear automatically before edits.</div>';
+    return;
+  }
+  el.innerHTML=snaps.map((snap,i)=>{
+    const dt=new Date(snap.ts).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const keys=Object.keys(snap.data||{}).length;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--b1);">
+      <div>
+        <div style="font-size:.72rem;color:var(--txt);font-weight:600;">${escH(snap.label)}</div>
+        <div style="font-size:.6rem;color:var(--muted);">${dt} · ${keys} keys</div>
+      </div>
+      <button onclick="_restoreSnapshot(${i})" style="background:none;border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-size:.65rem;padding:3px 10px;cursor:pointer;">↩ Restore</button>
+    </div>`;
+  }).join('');
+}
+
+async function doRestoreFromDrive(){
+  if(!_gTok){toast('Connect Drive first','err');return;}
+  showConfirm(
+    '☁️ Restore from Drive',
+    'This will replace ALL current app data with your last Drive backup. Continue?',
+    'Restore',
+    async function(){
+      _takeSnapshot('Before Drive restore');
+      _syncUI('spin','Restoring from Drive…');
+      try{
+        await _restoreFromDrive();
+        renderDashboard();updateAlertBadge();renderSettings();
+        toast('✓ Data restored from Drive','ok');
+      }catch(e){
+        _syncUI('err','Restore failed');
+        toast('Restore failed: '+e.message,'err');
+      }
+    }
+  );
+}
+
 /* ── SHARE RECEIPT AS IMAGE ── */
 function shareReceiptImage(){
   const el=document.getElementById('rcptBody');
@@ -1737,6 +1831,7 @@ function openTM(rid){
   openOv('ovTenant');
 }
 function confirmTenant(){
+  _takeSnapshot('Before tenant change Room '+(_tmRoom||''));
   const name=document.getElementById('tmName').value.trim();
   const phone=document.getElementById('tmPhone').value.trim();
   const date=document.getElementById('tmDate').value;
@@ -2017,6 +2112,8 @@ function renderSettings(){
   document.getElementById('roomCfg').innerHTML=h;
   const ls=lsRaw('rb_lsync');
   const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
+  // Render snapshot list
+  _renderSnapshotList();
 
   // User profile card
   if(_authUser){
@@ -2058,6 +2155,7 @@ function deleteRoom(rid){
   if(!room)return;
   if(room.tenantName){toast('Vacate room before deleting','err');return;}
   showConfirm('🗑️ Delete Room','Delete Room '+rid+'? This cannot be undone.','Delete',function(){
+    _takeSnapshot('Before deleting Room '+rid);
     saveRooms(rooms.filter(r=>r.id!==rid));
     toast('Room deleted','info');
     renderSettings();renderDashboard();
@@ -2180,6 +2278,8 @@ function init(){
   _syncUI('','Not connected');
   const ls=lsRaw('rb_lsync');
   const lsEl=document.getElementById('lastSync');if(lsEl&&ls)lsEl.textContent=ls;
+  // Render snapshot list
+  _renderSnapshotList();
 
   // Restore Drive token and connect
   _driveInit();
