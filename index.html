@@ -542,7 +542,8 @@ select.sinput option{background:var(--s2);}
           <div class="fg"><label class="flbl">Floor</label><select class="fin" id="nrFloor"><option>Ground</option><option>First</option><option>Second</option><option>Third</option></select></div>
           <div class="fg"><label class="flbl">Rent ₹</label><input class="fin" type="number" id="nrRent" placeholder="6000"/></div>
         </div>
-        <div class="frow2">
+        <div class="frow2" style="margin-bottom:7px;">
+          <div class="fg"><label class="flbl">Room Number</label><input class="fin" type="number" id="nrId" placeholder="Auto"/></div>
           <div class="fg"><label class="flbl">Due Date (1–28)</label><input class="fin" type="number" id="nrDue" placeholder="1" min="1" max="28"/></div>
           <div class="fg" style="justify-content:flex-end;"><label class="flbl">&nbsp;</label><button class="btn btn-acc" style="margin:0;" onclick="addRoom()">Add</button></div>
         </div>
@@ -2165,15 +2166,21 @@ function addRoom(){
   const floor=document.getElementById('nrFloor').value;
   const rent=parseInt(document.getElementById('nrRent').value);
   const due=parseInt(document.getElementById('nrDue').value);
+  const customId=parseInt(document.getElementById('nrId').value);
   if(!rent||rent<=0){toast('Enter valid rent','err');return;}
   if(!due||due<1||due>28){toast('Due date must be 1–28','err');return;}
-  const rooms=getRooms(),maxId=Math.max(...rooms.map(r=>r.id),0);
-  rooms.push({id:maxId+1,floor,rent,due,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''});
+  const rooms=getRooms();
+  const maxId=Math.max(...rooms.map(r=>r.id),0);
+  const newId=(!isNaN(customId)&&customId>0)?customId:maxId+1;
+  if(rooms.find(r=>r.id===newId)){toast('Room '+newId+' already exists','err');return;}
+  rooms.push({id:newId,floor,rent,due,tenantName:'',tenantPhone:'',lastMeterReading:0,deposit:0,moveInDate:''});
+  rooms.sort((a,b)=>a.id-b.id);
   saveRooms(rooms);
   document.getElementById('nrFloor').value='Ground';
   document.getElementById('nrRent').value='';
   document.getElementById('nrDue').value='';
-  toast('Room added ✓','ok');renderSettings();renderDashboard();
+  document.getElementById('nrId').value='';
+  toast('Room '+newId+' added ✓','ok');renderSettings();renderDashboard();
 }
 
 /* ── EXPORT / IMPORT ── */
