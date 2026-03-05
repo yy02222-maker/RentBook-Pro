@@ -641,6 +641,32 @@ select.sinput option{background:var(--s2);}
   </div>
 </div>
 
+<!-- EDIT BILL MODAL -->
+<div class="ov" id="ovEditBill" onclick="if(event.target===this)closeOv('ovEditBill')">
+  <div class="modal">
+    <div class="drag"></div>
+    <div class="mtit">✏️ Edit Bill</div>
+    <div class="msub" id="ebSub">Room details</div>
+    <div class="frow2" style="margin-bottom:8px;">
+      <div class="fg"><label class="flbl">Prev Reading (units)</label><input class="fin" type="number" id="ebPrev" readonly style="opacity:.55;"/></div>
+      <div class="fg"><label class="flbl">Curr Reading (units) *</label><input class="fin" type="number" id="ebCurr" oninput="liveEditBill()"/></div>
+    </div>
+    <div id="ebPreview" style="margin-bottom:8px;"></div>
+    <div class="togrow" style="margin-bottom:8px;">
+      <div class="toglbl">Mark as Paid</div>
+      <label class="tog"><input type="checkbox" id="ebPaid"/><span class="tsl"></span></label>
+    </div>
+    <div class="fg" style="margin-bottom:6px;">
+      <label class="flbl">Note (optional)</label>
+      <textarea class="ftxt" id="ebNote" placeholder="Correction reason…" style="min-height:40px;"></textarea>
+    </div>
+    <div class="mact">
+      <button class="btn btn-gh" onclick="closeOv('ovEditBill')">Cancel</button>
+      <button class="btn btn-acc" onclick="saveEditBill()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM MODAL -->
 <div class="cfm-ov" id="cfmOv">
   <div class="cfm-modal">
@@ -1423,6 +1449,9 @@ function renderPanel(room,bill,settings,s){
       <div class="g2" style="margin-top:5px;">
         ${room.tenantPhone?`<button class="btn btn-gh" onclick="sendWAReminder(${room.id})">🔔 Remind</button>`:'<div></div>'}
         <button class="btn btn-r" onclick="doResetBill(${room.id})">🗑 Reset Entry</button>
+      </div>
+      <div style="margin-top:4px;">
+        <button class="btn btn-gh" style="font-size:.7rem;color:var(--accent);" onclick="openEditBill(${room.id})">✏️ Edit This Bill</button>
       </div>`;
   }
 
@@ -1495,8 +1524,19 @@ function doResetBill(rid){
     'Reset',
     function(){
       const rooms=getRooms();
+      // Revert lastMeterReading to what it was before this bill
       saveRooms(rooms.map(r=>r.id===rid?{...r,lastMeterReading:bill.prevReading}:r));
       deleteRoomBill(curY,curM,rid);
+      // Also fix next month's bill if it used this month's reading as prev
+      const nM=curM===11?0:curM+1,nY=curM===11?curY+1:curY;
+      const nextBill=getRoomBill(nY,nM,rid);
+      if(nextBill&&nextBill.prevReading===bill.currReading){
+        nextBill.prevReading=bill.prevReading;
+        nextBill.units=nextBill.currReading-bill.prevReading;
+        nextBill.electricity=Math.round(nextBill.units*(parseFloat(getSettings().elecRate)||8));
+        nextBill.total=nextBill.rent+nextBill.electricity;
+        saveRoomBill(nY,nM,rid,nextBill);
+      }
       toast('Bill reset successfully','info');
       openPanels.add(rid);
       renderDashboard();updateAlertBadge();
@@ -1726,6 +1766,76 @@ function confirmVacate(){
   closeOv('ovVacate');toast('Room vacated','info');openPanels.delete(_vmRoom);renderDashboard();updateAlertBadge();
 }
 
+/* ── EDIT BILL ── */
+let _ebRoom=null,_ebY=null,_ebM=null;
+function openEditBill(rid){
+  const rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  const bill=getRoomBill(curY,curM,rid);
+  if(!bill){toast('No bill to edit','err');return;}
+  _ebRoom=rid;_ebY=curY;_ebM=curM;
+  const pM=curM===0?11:curM-1,pY=curM===0?curY-1:curY;
+  document.getElementById('ebSub').textContent='Room '+rid+' – '+MONTHS[pM]+' '+pY;
+  document.getElementById('ebPrev').value=bill.prevReading;
+  document.getElementById('ebCurr').value=bill.currReading;
+  document.getElementById('ebPaid').checked=bill.paid||false;
+  document.getElementById('ebNote').value='';
+  liveEditBill();
+  openOv('ovEditBill');
+}
+function liveEditBill(){
+  const rid=_ebRoom;if(!rid)return;
+  const rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  const settings=getSettings(),er=parseFloat(settings.elecRate)||8;
+  const prev=parseFloat(document.getElementById('ebPrev').value)||0;
+  const curr=parseFloat(document.getElementById('ebCurr').value)||0;
+  if(curr<prev){document.getElementById('ebPreview').innerHTML='<div style="color:var(--r);font-size:.72rem;">⚠ Current must be ≥ prev ('+prev+')</div>';return;}
+  const u=curr-prev,el=Math.round(u*er),tot=room.rent+el;
+  document.getElementById('ebPreview').innerHTML=`<div class="bprev">
+    <div class="brow"><span class="brl">Units</span><span class="brv">${u}</span></div>
+    <div class="brow"><span class="brl">Electricity</span><span class="brv">₹${fmt(el)}</span></div>
+    <div class="brow"><span class="brl">Rent</span><span class="brv">₹${fmt(room.rent)}</span></div>
+    <div class="brow tot"><span class="brl">Total</span><span class="brv">₹${fmt(tot)}</span></div>
+  </div>`;
+}
+function saveEditBill(){
+  const rid=_ebRoom;if(!rid)return;
+  const rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  const bill=getRoomBill(_ebY,_ebM,rid);
+  if(!bill){toast('Bill not found','err');return;}
+  const settings=getSettings(),er=parseFloat(settings.elecRate)||8;
+  const prev=parseFloat(document.getElementById('ebPrev').value)||0;
+  const curr=parseFloat(document.getElementById('ebCurr').value);
+  if(isNaN(curr)||curr<prev){toast('Invalid reading','err');return;}
+  const paid=document.getElementById('ebPaid').checked;
+  const note=document.getElementById('ebNote').value.trim();
+  const u=curr-prev,el=Math.round(u*er),tot=room.rent+el;
+  const oldCurr=bill.currReading;
+  bill.currReading=curr;bill.units=u;bill.electricity=el;bill.total=tot;
+  bill.paid=paid;
+  if(paid&&!bill.receiptNo)bill.receiptNo=nextRcptNo();
+  bill.editedAt=new Date().toISOString();
+  saveRoomBill(_ebY,_ebM,rid,bill);
+  // Update lastMeterReading on room
+  saveRooms(rooms.map(r=>r.id===rid?{...r,lastMeterReading:curr}:r));
+  // Fix next month if it used old currReading as prev
+  const nM=_ebM===11?0:_ebM+1,nY=_ebM===11?_ebY+1:_ebY;
+  const nextBill=getRoomBill(nY,nM,rid);
+  if(nextBill&&nextBill.prevReading===oldCurr){
+    nextBill.prevReading=curr;
+    nextBill.units=nextBill.currReading-curr;
+    nextBill.electricity=Math.round(nextBill.units*er);
+    nextBill.total=nextBill.rent+nextBill.electricity;
+    saveRoomBill(nY,nM,rid,nextBill);
+    toast('Bill updated + next month adjusted ✓','ok');
+  } else {
+    toast('Bill updated ✓','ok');
+  }
+  if(note)addNote(rid,'[Edit] '+note);
+  closeOv('ovEditBill');
+  openPanels.add(rid);
+  renderDashboard();updateAlertBadge();
+}
+
 /* ── ADD NOTE ── */
 function doAddNote(rid){
   document.getElementById('cfmIco').textContent='\u{1F4DD}';
@@ -1876,12 +1986,26 @@ function renderSettings(){
   let h='<div class="scard-hd">🏠 Room Configuration</div>';
   rooms.forEach(r=>{
     const hist=getTenantLog(r.id);
-    h+=`<div class="srow">
-      <div><div class="srl">Room ${r.id} · ${r.floor}</div><div class="srs">Due ${r.due}${sfx(r.due)} · ${hist.length} tenant(s)</div></div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
-        <div style="font-size:.58rem;color:var(--muted);">Rent ₹</div>
-        <input class="sinput" type="number" value="${r.rent}" style="width:80px;" onchange="saveRoomRent(${r.id},this.value)"/>
+    h+=`<div style="border:1px solid var(--b1);border-radius:var(--rads);margin:8px 0;padding:10px 12px;background:var(--bg2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:700;color:var(--txt);font-size:.82rem;">Room ${r.id} · ${r.floor} Floor</div>
+        <button onclick="deleteRoom(${r.id})" style="background:none;border:1px solid var(--r);border-radius:6px;color:var(--r);font-size:.62rem;padding:2px 8px;cursor:pointer;">🗑 Delete</button>
       </div>
+      <div class="frow2" style="margin-bottom:6px;">
+        <div class="fg"><label class="flbl">Floor</label>
+          <select class="fin" onchange="saveRoomField(${r.id},'floor',this.value)">
+            ${['Ground','First','Second','Third'].map(f=>'<option'+(r.floor===f?' selected':'')+'>'+f+'</option>').join('')}
+          </select></div>
+        <div class="fg"><label class="flbl">Rent ₹</label>
+          <input class="fin" type="number" value="${r.rent}" onchange="saveRoomField(${r.id},'rent',this.value)"/></div>
+      </div>
+      <div class="frow2" style="margin-bottom:6px;">
+        <div class="fg"><label class="flbl">Due Date (1–28)</label>
+          <input class="fin" type="number" min="1" max="28" value="${r.due}" onchange="saveRoomField(${r.id},'due',this.value)"/></div>
+        <div class="fg"><label class="flbl">Meter Reading</label>
+          <input class="fin" type="number" value="${r.lastMeterReading||0}" onchange="saveRoomField(${r.id},'lastMeterReading',this.value)"/></div>
+      </div>
+      <div style="font-size:.62rem;color:var(--muted);margin-top:2px;">${hist.length} tenant(s) on record · ${r.tenantName?'Occupied: '+escH(r.tenantName):'Vacant'}</div>
     </div>`;
   });
   document.getElementById('roomCfg').innerHTML=h;
@@ -1909,6 +2033,29 @@ function saveRoomRent(rid,val){
   saveRooms(getRooms().map(r=>r.id===rid?{...r,rent:v}:r));
   toast('Rent updated ✓','ok');
   _schedSync();
+}
+
+function saveRoomField(rid,field,val){
+  const rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  if(!room)return;
+  let v=val;
+  if(field==='rent'){v=parseInt(val);if(isNaN(v)||v<=0){toast('Invalid rent','err');return;}}
+  if(field==='due'){v=parseInt(val);if(isNaN(v)||v<1||v>28){toast('Due date must be 1–28','err');return;}}
+  if(field==='lastMeterReading'){v=parseFloat(val);if(isNaN(v)||v<0){toast('Invalid reading','err');return;}}
+  saveRooms(rooms.map(r=>r.id===rid?{...r,[field]:v}:r));
+  toast(field==='lastMeterReading'?'Meter reading updated ✓':'Room updated ✓','ok');
+  renderDashboard();
+}
+
+function deleteRoom(rid){
+  const rooms=getRooms(),room=rooms.find(r=>r.id===rid);
+  if(!room)return;
+  if(room.tenantName){toast('Vacate room before deleting','err');return;}
+  showConfirm('🗑️ Delete Room','Delete Room '+rid+'? This cannot be undone.','Delete',function(){
+    saveRooms(rooms.filter(r=>r.id!==rid));
+    toast('Room deleted','info');
+    renderSettings();renderDashboard();
+  });
 }
 function addRoom(){
   const floor=document.getElementById('nrFloor').value;
