@@ -1,87 +1,49 @@
-/* ════════════════════════════════════════════
-   RentBook Pro — Service Worker v1.0
-   Offline-first caching strategy
-   ════════════════════════════════════════════ */
-
-const CACHE = 'rentbook-v1';
+/* RentBook Pro — Service Worker v6 */
+const CACHE = 'rentbook-v6';
 const FONTS_CACHE = 'rentbook-fonts-v1';
+const APP_SHELL = ['/RentBook-Pro/', '/RentBook-Pro/index.html', '/RentBook-Pro/manifest.json'];
 
-// Core app shell — these are cached on install
-const APP_SHELL = [
-  '/RentBook-Pro/',
-  '/RentBook-Pro/index.html',
-  '/RentBook-Pro/manifest.json',
-];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(APP_SHELL)).then(() => self.skipWaiting()));
+});
 
-// ── Install: cache app shell ──
-self.addEventListener('install', function(e){
+self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.open(CACHE).then(function(cache){
-      return cache.addAll(APP_SHELL);
-    }).then(function(){
-      return self.skipWaiting();
-    })
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k !== CACHE && k !== FONTS_CACHE).map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
   );
 });
 
-// ── Activate: clean up old caches ──
-self.addEventListener('activate', function(e){
-  e.waitUntil(
-    caches.keys().then(function(keys){
-      return Promise.all(
-        keys.filter(function(k){ return k !== CACHE && k !== FONTS_CACHE; })
-            .map(function(k){ return caches.delete(k); })
-      );
-    }).then(function(){
-      return self.clients.claim();
-    })
-  );
-});
-
-// ── Fetch: serve from cache, fall back to network ──
-self.addEventListener('fetch', function(e){
+self.addEventListener('fetch', e => {
   const url = e.request.url;
+  if(url.includes('accounts.google.com') || url.includes('googleapis.com') || url.includes('googleusercontent.com')) return;
 
-  // Never intercept Google OAuth / API calls — always go to network
-  if(url.includes('accounts.google.com') ||
-     url.includes('googleapis.com') ||
-     url.includes('googleusercontent.com') ||
-     url.includes('fonts.googleapis.com')){
-    // For Google Fonts — cache after first fetch
-    if(url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')){
-      e.respondWith(
-        caches.open(FONTS_CACHE).then(function(cache){
-          return cache.match(e.request).then(function(cached){
-            if(cached) return cached;
-            return fetch(e.request).then(function(resp){
-              cache.put(e.request, resp.clone());
-              return resp;
-            }).catch(function(){ return cached; });
-          });
-        })
-      );
-    }
-    // All other Google API calls — network only
+  if(url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')){
+    e.respondWith(caches.open(FONTS_CACHE).then(c => c.match(e.request).then(cached => {
+      if(cached) return cached;
+      return fetch(e.request).then(r => { c.put(e.request, r.clone()); return r; }).catch(() => cached);
+    })));
     return;
   }
 
-  // App shell — cache first, network fallback
-  e.respondWith(
-    caches.match(e.request).then(function(cached){
-      if(cached) return cached;
-      return fetch(e.request).then(function(resp){
-        // Cache successful GET responses for app assets
-        if(e.request.method === 'GET' && resp.status === 200){
-          const copy = resp.clone();
-          caches.open(CACHE).then(function(cache){ cache.put(e.request, copy); });
-        }
-        return resp;
-      }).catch(function(){
-        // Offline fallback — serve index.html for navigation requests
-        if(e.request.mode === 'navigate'){
-          return caches.match('/RentBook-Pro/index.html');
-        }
-      });
-    })
-  );
+  // index.html — NETWORK FIRST so new versions always load
+  if(e.request.mode === 'navigate' || url.endsWith('index.html') || url.endsWith('/RentBook-Pro/')){
+    e.respondWith(
+      fetch(e.request).then(r => {
+        if(r && r.status === 200){ const copy=r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+        return r;
+      }).catch(() => caches.match('/RentBook-Pro/index.html'))
+    );
+    return;
+  }
+
+  // Other assets — cache first
+  e.respondWith(caches.match(e.request).then(cached => {
+    if(cached) return cached;
+    return fetch(e.request).then(r => {
+      if(e.request.method==='GET' && r.status===200){ const copy=r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+      return r;
+    }).catch(() => e.request.mode==='navigate' ? caches.match('/RentBook-Pro/index.html') : null);
+  }));
 });
